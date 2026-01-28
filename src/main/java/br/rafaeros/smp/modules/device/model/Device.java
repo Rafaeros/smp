@@ -1,0 +1,44 @@
+package br.rafaeros.smp.modules.device.model;
+
+import java.time.Instant;
+
+import br.rafaeros.smp.core.model.BaseEntity;
+import br.rafaeros.smp.modules.device.model.enums.ProcessStatus;
+import br.rafaeros.smp.modules.device.model.enums.DeviceStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "devices")
+public class Device extends BaseEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true)
+    private String macAddress;
+
+    private String ipAddress;
+
+    @Enumerated(EnumType.STRING)
+    private DeviceStatus status;
+
+    @Enumerated(EnumType.STRING)
+    private ProcessStatus process;
+
+    private Instant lastSeen;
+}
