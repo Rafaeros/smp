@@ -18,7 +18,7 @@ public record UserDeviceResponseDTO (
             device.getMacAddress(),
             device.getIpAddress(),
             device.getStatus(),
-            device.getProcess(),
+            device.getProcessStatus(),
             device.getLastSeen() != null ? device.getLastSeen().toString() : null
         );
     }

@@ -3,8 +3,9 @@ package br.rafaeros.smp.modules.device.model;
 import java.time.Instant;
 
 import br.rafaeros.smp.core.model.BaseEntity;
-import br.rafaeros.smp.modules.device.model.enums.ProcessStatus;
 import br.rafaeros.smp.modules.device.model.enums.DeviceStatus;
+import br.rafaeros.smp.modules.device.model.enums.ProcessStage;
+import br.rafaeros.smp.modules.device.model.enums.ProcessStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -38,7 +39,10 @@ public class Device extends BaseEntity {
     private DeviceStatus status;
 
     @Enumerated(EnumType.STRING)
-    private ProcessStatus process;
+    private ProcessStage currentStage;
+
+    @Enumerated(EnumType.STRING)
+    private ProcessStatus processStatus;
 
     private Instant lastSeen;
 }
