@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.rafaeros.smp.modules.device.model.enums.DeviceStatus;
 import br.rafaeros.smp.modules.device.service.DeviceService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -89,7 +90,7 @@ public class TcpServerService {
             e.printStackTrace();
         } finally {
             if (macAddress != null) {
-                deviceService.setStatusOffline(macAddress);
+                deviceService.updateDeviceStatus(macAddress, DeviceStatus.OFFLINE);
                 System.out.println("🔌 [TCP] Conexão finalizada para: " + macAddress);
             }
             try {
