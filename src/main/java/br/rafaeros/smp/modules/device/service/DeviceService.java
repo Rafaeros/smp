@@ -5,6 +5,7 @@ import java.time.Instant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.rafaeros.smp.core.exception.ResourceNotFoundException;
 import br.rafaeros.smp.modules.device.controller.dto.DeviceResponseDTO;
 import br.rafaeros.smp.modules.device.model.Device;
 import br.rafaeros.smp.modules.device.model.enums.DeviceStatus;
@@ -38,10 +39,21 @@ public class DeviceService {
                 });
     }
 
-    public void setStatusOffline(String macAddress) {
+    @Transactional
+    public DeviceResponseDTO updateProcessStatus(String macAddress, ProcessStatus processStatus) {
+        Device device = deviceRepository.findByMacAddress(macAddress)
+                .orElseThrow(() -> new ResourceNotFoundException("Dispositivo nao encontrado"));
+
+        device.setProcess(processStatus);
+        device.setLastSeen(Instant.now());
+        return DeviceResponseDTO.fromEntity(deviceRepository.save(device));
+    }
+
+    @Transactional
+    public void updateDeviceStatus(String macAddress, DeviceStatus status) {
         deviceRepository.findByMacAddress(macAddress)
                 .ifPresent(device -> {
-                    device.setStatus(DeviceStatus.OFFLINE);
+                    device.setStatus(status);
                     deviceRepository.save(device);
                 });
     }
