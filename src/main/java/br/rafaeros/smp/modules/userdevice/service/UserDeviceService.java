@@ -1,5 +1,6 @@
 package br.rafaeros.smp.modules.userdevice.service;
 
+import java.util.List;
 import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,34 +8,48 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
-import br.rafaeros.smp.modules.device.controller.dto.UserDeviceResponseDTO;
 import br.rafaeros.smp.modules.device.model.Device;
 import br.rafaeros.smp.modules.device.repository.DeviceRepository;
 import br.rafaeros.smp.modules.user.model.User;
 import br.rafaeros.smp.modules.user.repository.UserRepository;
 import br.rafaeros.smp.modules.userdevice.controller.dto.DeviceBindingDTO;
+import br.rafaeros.smp.modules.userdevice.controller.dto.UserDeviceResponseDTO;
 import br.rafaeros.smp.modules.userdevice.model.UserDevice;
 import br.rafaeros.smp.modules.userdevice.repository.UserDeviceRepository;
 
 @Service
 public class UserDeviceService {
-    @Autowired private UserDeviceRepository userDeviceRepository;
-    @Autowired private DeviceRepository deviceRepository;
-    @Autowired private UserRepository userRepository;
+    @Autowired
+    private UserDeviceRepository userDeviceRepository;
+    @Autowired
+    private DeviceRepository deviceRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Transactional
     public UserDeviceResponseDTO linkDeviceToUser(Long userId, DeviceBindingDTO dto) {
         User user = userRepository.findById(Objects.requireNonNull(userId))
-            .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
 
         Device device = deviceRepository.findById(Objects.requireNonNull(dto.id()))
-            .orElseThrow(() -> new ResourceNotFoundException("Dispositivo nao encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Dispositivo não encontrado"));
 
         UserDevice userDevice = new UserDevice(user.getId(), device.getId(), dto.name());
-        
-        userDeviceRepository.save(userDevice);
+        userDevice.setUser(user);
+        userDevice.setDevice(device);
+        userDevice.setCoordinateX(dto.coordinateX());
+        userDevice.setCoordinateY(dto.coordinateY());
 
-        return UserDeviceResponseDTO.fromEntity(device, dto.name());
+        UserDevice saved = userDeviceRepository.save(userDevice);
+        return UserDeviceResponseDTO.fromEntity(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserDeviceResponseDTO> getMyMap(Long userId) {
+        return userDeviceRepository.findByUserId(userId)
+                .stream()
+                .map(UserDeviceResponseDTO::fromEntity)
+                .toList();
     }
 
 }

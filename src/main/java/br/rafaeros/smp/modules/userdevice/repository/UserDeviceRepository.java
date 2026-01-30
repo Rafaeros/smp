@@ -14,9 +14,10 @@ import br.rafaeros.smp.modules.userdevice.model.UserDevice;
 public interface UserDeviceRepository extends JpaRepository<UserDevice, Long> {
 
     @Query("SELECT ud FROM UserDevice ud JOIN FETCH ud.device WHERE ud.user.id = :userId")
-    List<UserDevice> findAllByUserId(@Param("userId") Long userId);
+    List<UserDevice> findByUserId(@Param("userId") Long userId);
 
     boolean existsByUserIdAndDeviceId(Long userId, Long deviceId);
+    boolean existsByUserIdAndDeviceMacAddress(Long userId, String macAddress);
 
     Optional<UserDevice> findByUserIdAndDeviceId(Long userId, Long deviceId);
 }
