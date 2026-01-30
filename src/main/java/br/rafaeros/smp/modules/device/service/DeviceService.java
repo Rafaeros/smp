@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
+import br.rafaeros.smp.modules.device.controller.dto.DeviceDetailsResponseDTO;
 import br.rafaeros.smp.modules.device.controller.dto.DeviceResponseDTO;
 import br.rafaeros.smp.modules.device.controller.dto.UpdateDeviceDTO;
 import br.rafaeros.smp.modules.device.model.Device;
@@ -43,6 +44,7 @@ public class DeviceService {
                 .map(existingDevice -> {
                     existingDevice.setIpAddress(ipAddress);
                     existingDevice.setStatus(DeviceStatus.ONLINE);
+                    existingDevice.setProcessStatus(ProcessStatus.IDLE);
                     existingDevice.setLastSeen(Instant.now());
                     return DeviceResponseDTO.fromEntity(deviceRepository.save(existingDevice));
                 })
@@ -72,17 +74,17 @@ public class DeviceService {
     }
 
     @Transactional(readOnly = true)
-    public DeviceResponseDTO findById(Long id) {
+    public DeviceDetailsResponseDTO findById(Long id) {
         Device device = deviceRepository.findById(Objects.requireNonNull(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo nao encontrado"));
-        return DeviceResponseDTO.fromEntity(device);
+        return DeviceDetailsResponseDTO.fromEntity(device);
     }
 
     @Transactional(readOnly = true)
-    public DeviceResponseDTO findByMacAddress(String macAddress) {
+    public DeviceDetailsResponseDTO findByMacAddress(String macAddress) {
         Device device = deviceRepository.findByMacAddress(macAddress)
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo nao encontrado"));
-        return DeviceResponseDTO.fromEntity(device);
+        return DeviceDetailsResponseDTO.fromEntity(device);
     }
 
     @Transactional
