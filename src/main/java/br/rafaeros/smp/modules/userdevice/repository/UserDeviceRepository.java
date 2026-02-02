@@ -19,5 +19,6 @@ public interface UserDeviceRepository extends JpaRepository<UserDevice, Long> {
     boolean existsByUserIdAndDeviceId(Long userId, Long deviceId);
     boolean existsByUserIdAndDeviceMacAddress(Long userId, String macAddress);
 
+    Optional<UserDevice> findByIdAndUserId(Long id, Long userId);
     Optional<UserDevice> findByUserIdAndDeviceId(Long userId, Long deviceId);
 }
