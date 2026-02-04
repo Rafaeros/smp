@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.rafaeros.smp.core.exception.BussinessException;
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
+import br.rafaeros.smp.modules.device.controller.dto.CreateDeviceRequestDTO;
 import br.rafaeros.smp.modules.device.controller.dto.DeviceDetailsResponseDTO;
 import br.rafaeros.smp.modules.device.controller.dto.DeviceResponseDTO;
 import br.rafaeros.smp.modules.device.controller.dto.UpdateDeviceDTO;
@@ -24,14 +26,14 @@ public class DeviceService {
     private DeviceRepository deviceRepository;
 
     @Transactional
-    public DeviceResponseDTO registerDevice(String macAddress, String ipAddress) {
-        boolean exists = deviceRepository.existsByMacAddress(macAddress);
+    public DeviceResponseDTO createDevice(CreateDeviceRequestDTO dto) {
+        boolean exists = deviceRepository.existsByMacAddress(dto.macAddress());
         if (exists) {
-            throw new ResourceNotFoundException("Dispositivo com o MAC " + macAddress + " ja cadastrado.");
+            throw new BussinessException("Dispositivo com o MAC " + dto.macAddress() + " ja cadastrado.");
         }
         Device device = new Device();
-        device.setMacAddress(macAddress);
-        device.setIpAddress(ipAddress);
+        device.setMacAddress(dto.macAddress());
+        device.setIpAddress(dto.ipAddress());
         device.setStatus(DeviceStatus.ONLINE);
         device.setProcessStatus(ProcessStatus.IDLE);
         device.setLastSeen(Instant.now());

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.rafaeros.smp.modules.device.controller.dto.CreateDeviceRequestDTO;
 import br.rafaeros.smp.modules.device.controller.dto.DeviceDetailsResponseDTO;
 import br.rafaeros.smp.modules.device.controller.dto.DeviceResponseDTO;
 import br.rafaeros.smp.modules.device.controller.dto.UpdateDeviceDTO;
@@ -30,8 +31,8 @@ public class DeviceController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<DeviceResponseDTO> registerDevice(String macAddress, String ipAddress) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(deviceService.registerDevice(macAddress, ipAddress));
+    public ResponseEntity<DeviceResponseDTO> createDevice(@RequestBody @Valid CreateDeviceRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(deviceService.createDevice(dto));
     }
 
     @GetMapping
