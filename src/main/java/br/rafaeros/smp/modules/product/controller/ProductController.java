@@ -35,7 +35,7 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ProductListDTO>> getAll(@PageableDefault(size = 10, page = 0) Pageable pageable) {
+    public ResponseEntity<Page<ProductResponseDTO>> getAll(@PageableDefault(size = 10, page = 0) Pageable pageable) {
         return ResponseEntity.ok(productService.findAll(pageable));
     }
 

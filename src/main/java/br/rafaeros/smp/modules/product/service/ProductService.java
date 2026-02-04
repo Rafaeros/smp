@@ -36,10 +36,10 @@ public class ProductService {
         return ProductListDTO.fromEntity(product);
     }
 
-    public Page<ProductListDTO> findAll(Pageable pageable) {
+    public Page<ProductResponseDTO> findAll(Pageable pageable) {
         Pageable safePage = Objects.requireNonNull(pageable);
         return productRepository.findAll(safePage)
-                .map(ProductListDTO::fromEntity);
+                .map(ProductResponseDTO::fromEntity);
     }
 
     public ProductResponseDTO findById(Long id) {
