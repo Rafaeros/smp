@@ -1,5 +1,6 @@
 package br.rafaeros.smp.modules.order.service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -8,10 +9,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import br.rafaeros.smp.core.exception.BussinessException;
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
+import br.rafaeros.smp.core.utils.DateUtils;
 import br.rafaeros.smp.modules.client.model.Client;
 import br.rafaeros.smp.modules.client.service.ClientService;
+import br.rafaeros.smp.modules.order.controller.dto.CreateOrderDTO;
 import br.rafaeros.smp.modules.order.controller.dto.OrderResponseDTO;
+import br.rafaeros.smp.modules.order.controller.dto.UpdateOrderDTO;
 import br.rafaeros.smp.modules.order.model.Order;
 import br.rafaeros.smp.modules.order.model.enums.OrderStatus;
 import br.rafaeros.smp.modules.order.repository.OrderRepository;
@@ -48,16 +53,82 @@ public class OrderService {
                 .toList();
     }
 
-    public OrderResponseDTO createOrder() {
-        // Implementation for creating an order goes here
-        return null; // Placeholder return
+    public OrderResponseDTO createOrder(CreateOrderDTO dto) {
+        Product product = productService.findByIdInternal(dto.productId());
+        Client client = clientService.findByIdInternal(dto.clientId());
+        Optional<Order> existingOpt = orderRepository.findByCode(dto.code());
+
+        if (existingOpt.isPresent()) {
+            throw new BussinessException("Ja existe uma OP com o codigo: " + dto.code());
+        }
+
+        Order order = new Order();
+        order.setCreationDate(Instant.now());
+        order.setDeliveryDate(DateUtils.parseBRDate(dto.deliveryDate()));
+        order.setCode(dto.code());
+        order.setClient(client);
+        order.setProduct(product);
+        order.setTotalQuantity(dto.totalQuantity());
+        order.setProducedQuantity(dto.producedQuantity());
+        order.setStatus(mapStatus(dto.status()));
+
+        return OrderResponseDTO.fromEntity(orderRepository.save(order));
     }
 
-
-    // Private Methods
     public Page<OrderResponseDTO> findAll(Pageable pageable) {
         Pageable safePage = Objects.requireNonNull(pageable);
         return orderRepository.findAll(safePage).map(OrderResponseDTO::fromEntity);
+    }
+
+    public OrderResponseDTO findById(Long id) {
+        return OrderResponseDTO.fromEntity(findByIdInternal(id));
+    }
+
+    public OrderResponseDTO findByCode(String code) {
+        return OrderResponseDTO.fromEntity(findByCodeInternal(code));
+    }
+
+    public OrderResponseDTO updateOrder(Long id, UpdateOrderDTO dto) {
+        Order existing = findByIdInternal(id);
+
+        if (existing == null) {
+            throw new ResourceNotFoundException("Ordem não encontrada com o ID: " + id);
+        }
+
+        if (dto.deliveryDate() != null) {
+            existing.setDeliveryDate(DateUtils.parseBRDate(dto.deliveryDate()));
+        }
+        if (dto.totalQuantity() != null) {
+            existing.setTotalQuantity(dto.totalQuantity());
+        }
+        if (dto.producedQuantity() != null) {
+            existing.setProducedQuantity(dto.producedQuantity());
+        }
+
+        return OrderResponseDTO.fromEntity(orderRepository.save(existing));
+    }
+
+    public void deleteOrder(Long id) {
+        Order order = findByIdInternal(id);
+
+        if (order == null) {
+            throw new ResourceNotFoundException("Ordem não encontrada com o ID: " + id);
+        }
+
+        orderRepository.deleteById(Objects.requireNonNull(id));
+    }
+
+    // Private Methods
+    private Order findByIdInternal(Long id) {
+        Long safeId = Objects.requireNonNull(id);
+        return orderRepository.findById(safeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ordem não encontrada com o ID: " + id));
+    }
+
+    private Order findByCodeInternal(String code) {
+        String safeCode = Objects.requireNonNull(code);
+        return orderRepository.findByCode(safeCode)
+                .orElseThrow(() -> new ResourceNotFoundException("Ordem não encontrada com o código: " + code));
     }
 
     private Order processSingleOrder(OrderScrapeDTO dto, boolean force) {
@@ -92,7 +163,6 @@ public class OrderService {
         order.setTotalQuantity(dto.totalQuantity());
         order.setProducedQuantity(dto.producedQuantity());
         order.setStatus(mapStatus(dto.status()));
-
         return orderRepository.save(order);
     }
 
