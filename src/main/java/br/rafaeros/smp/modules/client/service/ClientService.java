@@ -74,10 +74,10 @@ public class ClientService {
         }
     }
 
-    private Client findByIdInternal(Long id) {
+    public Client findByIdInternal(Long id) {
         Long safeId = Objects.requireNonNull(id);
         return clientRepository.findById(safeId)
-                .orElseThrow(() -> new RuntimeException("Cliente não encontrado com o ID: " + safeId));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado com o ID: " + safeId));
     }
 
     private Client findByNameInternal(String name) {
