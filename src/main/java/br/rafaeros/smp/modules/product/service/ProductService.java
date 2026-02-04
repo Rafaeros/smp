@@ -84,7 +84,7 @@ public class ProductService {
         }
     }
 
-    private Product findByIdInternal(Long id) {
+    public Product findByIdInternal(Long id) {
         Long safeId = Objects.requireNonNull(id);
         return productRepository.findById(safeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado pelo ID: " + id));
