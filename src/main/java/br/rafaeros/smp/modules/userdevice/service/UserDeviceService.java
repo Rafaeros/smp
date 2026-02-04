@@ -9,8 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
 import br.rafaeros.smp.modules.device.model.Device;
+import br.rafaeros.smp.modules.device.model.enums.ProcessStage;
 import br.rafaeros.smp.modules.device.repository.DeviceRepository;
 import br.rafaeros.smp.modules.user.model.User;
+import br.rafaeros.smp.modules.user.model.enums.Role;
 import br.rafaeros.smp.modules.user.repository.UserRepository;
 import br.rafaeros.smp.modules.userdevice.controller.dto.DeviceBindingDTO;
 import br.rafaeros.smp.modules.userdevice.controller.dto.UpdateDeviceDetailsDTO;
@@ -29,7 +31,7 @@ public class UserDeviceService {
     private UserRepository userRepository;
 
     @Transactional
-    public UserDeviceDetailsDTO linkDeviceToUser(Long userId, DeviceBindingDTO dto) {
+    public UserDeviceDetailsDTO bindDeviceToUser(Long userId, DeviceBindingDTO dto) {
         User user = userRepository.findById(Objects.requireNonNull(userId))
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
 
@@ -48,7 +50,17 @@ public class UserDeviceService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserDeviceMapResponseDTO> getMyMap(Long userId) {
+    public List<UserDeviceMapResponseDTO> getMyMap(User user) {
+
+        Long userId = user.getId();
+        
+        if (user.getRole() == Role.ADMIN) {
+            return userDeviceRepository.findAll()
+                    .stream()
+                    .map(UserDeviceMapResponseDTO::fromEntity)
+                    .toList();
+        }
+
         return userDeviceRepository.findByUserId(userId)
                 .stream()
                 .map(UserDeviceMapResponseDTO::fromEntity)
@@ -85,12 +97,26 @@ public class UserDeviceService {
         }
 
         if (dto.processStage() != null) {
-            userDevice.getDevice().setCurrentStage(dto.processStage());
+            userDevice.getDevice().setCurrentStage(ProcessStage.valueOf(dto.processStage()));
         }
 
         UserDevice updated = userDeviceRepository.save(userDevice);
         return UserDeviceDetailsDTO.fromEntity(updated);
 
     }
+
+    @Transactional
+    public void unbindDevice(Long userDeviceId, Long userId) {
+        
+        UserDevice userDevice = userDeviceRepository.findByIdAndUserId(userDeviceId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Dispositivo do usuário não encontrado"));
+
+        if (userDevice == null) {
+            throw new ResourceNotFoundException("Dispositivo do usuário nao encontrado");
+        }
+
+        userDeviceRepository.delete(userDevice);
+    }
+
 
 }

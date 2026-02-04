@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,8 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import br.rafaeros.smp.modules.user.model.User;
 import br.rafaeros.smp.modules.userdevice.controller.dto.DeviceBindingDTO;
 import br.rafaeros.smp.modules.userdevice.controller.dto.UpdateDeviceDetailsDTO;
-import br.rafaeros.smp.modules.userdevice.controller.dto.UserDeviceMapResponseDTO;
 import br.rafaeros.smp.modules.userdevice.controller.dto.UserDeviceDetailsDTO;
+import br.rafaeros.smp.modules.userdevice.controller.dto.UserDeviceMapResponseDTO;
 import br.rafaeros.smp.modules.userdevice.service.UserDeviceService;
 import jakarta.validation.Valid;
 
@@ -34,13 +35,13 @@ public class UserDeviceController {
             @RequestBody @Valid DeviceBindingDTO dto,
             Authentication authentication) {
         User user = (User) authentication.getPrincipal();
-        return ResponseEntity.ok(userDeviceService.linkDeviceToUser(user.getId(), dto));
+        return ResponseEntity.ok(userDeviceService.bindDeviceToUser(user.getId(), dto));
     }
 
     @GetMapping("/my-map")
     public ResponseEntity<List<UserDeviceMapResponseDTO>> getMyMap(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
-        return ResponseEntity.ok(userDeviceService.getMyMap(user.getId()));
+        return ResponseEntity.ok(userDeviceService.getMyMap(user));
     }
 
     @GetMapping("/{id}")
@@ -58,4 +59,12 @@ public class UserDeviceController {
         UserDeviceDetailsDTO userDevice = userDeviceService.updateDeviceDetails(id, user.getId(), dto);
         return ResponseEntity.ok(userDevice);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteDevice(@PathVariable Long id, Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        userDeviceService.unbindDevice(id, user.getId());
+        return ResponseEntity.noContent().build();
+    }
+
 }
