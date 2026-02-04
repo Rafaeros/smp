@@ -26,10 +26,10 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/create")
+    @PostMapping()
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserResponseDTO> registerUser(@RequestBody @Valid CreateUserRequestDTO dto) {
-        return ResponseEntity.ok(userService.registerUser(dto));
+    public ResponseEntity<UserResponseDTO> createUser(@RequestBody @Valid CreateUserRequestDTO dto) {
+        return ResponseEntity.ok(userService.createUser(dto));
     }
 
     @GetMapping

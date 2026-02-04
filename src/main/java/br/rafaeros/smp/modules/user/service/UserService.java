@@ -28,18 +28,10 @@ public class UserService implements UserDetailsService {
     private final String DEFAULT_PASSWORD = "mudar@123";
 
     @Transactional
-    public UserResponseDTO registerUser(CreateUserRequestDTO dto) {
-
-        if (dto.username() == null) {
-            throw new BussinessException("Nome de usuario nao informado");
-        }
+    public UserResponseDTO createUser(CreateUserRequestDTO dto) {
 
         if (userRepository.existsByUsername(dto.username())) {
             throw new BussinessException("Nome de usuario ja cadastrado");
-        }
-
-        if (dto.role() == null) {
-            throw new BussinessException("Cargo não informado");
         }
 
         Role userRole;
