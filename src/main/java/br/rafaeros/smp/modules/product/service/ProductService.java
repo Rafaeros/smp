@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import br.rafaeros.smp.core.exception.BussinessException;
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
 import br.rafaeros.smp.modules.product.controller.dto.CreateProductDTO;
-import br.rafaeros.smp.modules.product.controller.dto.ProductListDTO;
 import br.rafaeros.smp.modules.product.controller.dto.ProductResponseDTO;
 import br.rafaeros.smp.modules.product.model.Product;
 import br.rafaeros.smp.modules.product.repository.ProductRepository;
@@ -24,7 +23,7 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    public ProductListDTO createProduct(CreateProductDTO dto) {
+    public ProductResponseDTO createProduct(CreateProductDTO dto) {
         boolean exits = productRepository.existsByCode(dto.code());
         if (exits) {
             throw new ResourceNotFoundException("Produto já cadastrado com o código: " + dto.code());
@@ -32,13 +31,21 @@ public class ProductService {
         Product product = new Product();
         product.setCode(dto.code());
         product.setDescription(dto.description());
-        productRepository.save(product);
-        return ProductListDTO.fromEntity(product);
+        Product saved = productRepository.save(product);
+        return ProductResponseDTO.fromEntity(saved);
     }
 
-    public Page<ProductResponseDTO> findAll(Pageable pageable) {
+    public Page<ProductResponseDTO> findAll(Pageable pageable, String code, String description) {
         Pageable safePage = Objects.requireNonNull(pageable);
-        return productRepository.findAll(safePage)
+
+        String codeFilter = (code != null && !code.isBlank()) ? "%" + code + "%" : null;
+        String descFilter = (description != null && !description.isBlank()) ? "%" + description + "%" : null;
+
+        if (codeFilter == null && descFilter == null) {
+            return productRepository.findAll(safePage).map(ProductResponseDTO::fromEntity);
+        }
+
+        return productRepository.findByFilters(codeFilter, descFilter, safePage)
                 .map(ProductResponseDTO::fromEntity);
     }
 
@@ -69,7 +76,8 @@ public class ProductService {
         try {
             productRepository.deleteById(safeId);
         } catch (DataIntegrityViolationException e) {
-            throw new BussinessException("Não é possível excluir este produto pois ele já possui Ordens de Produção vinculadas.");
+            throw new BussinessException(
+                    "Não é possível excluir este produto pois ele já possui Ordens de Produção vinculadas.");
         }
     }
 

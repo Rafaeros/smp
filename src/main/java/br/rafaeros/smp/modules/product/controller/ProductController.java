@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.rafaeros.smp.modules.product.controller.dto.CreateProductDTO;
-import br.rafaeros.smp.modules.product.controller.dto.ProductListDTO;
 import br.rafaeros.smp.modules.product.controller.dto.ProductResponseDTO;
 import br.rafaeros.smp.modules.product.service.ProductService;
 import jakarta.validation.Valid;
@@ -30,13 +30,14 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductListDTO> createProduct(@RequestBody @Valid CreateProductDTO dto) {
+    public ResponseEntity<ProductResponseDTO> createProduct(@RequestBody @Valid CreateProductDTO dto) {
         return ResponseEntity.status(201).body(productService.createProduct(dto));
     }
 
     @GetMapping
-    public ResponseEntity<Page<ProductResponseDTO>> getAll(@PageableDefault(size = 10, page = 0) Pageable pageable) {
-        return ResponseEntity.ok(productService.findAll(pageable));
+    public ResponseEntity<Page<ProductResponseDTO>> getAll(@PageableDefault(size = 20, page = 0) Pageable pageable,
+            @RequestParam(required = false) String code, @RequestParam(required = false) String description) {
+        return ResponseEntity.ok(productService.findAll(pageable, code, description));
     }
 
     @GetMapping("/{id}")
