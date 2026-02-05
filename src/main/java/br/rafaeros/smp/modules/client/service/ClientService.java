@@ -30,9 +30,15 @@ public class ClientService {
         return ClientResponseDTO.fromEntity(client);
     }
 
-    public Page<ClientResponseDTO> findAll(Pageable pageable) {
+    public Page<ClientResponseDTO> findAll(Pageable pageable, String name) {
         Pageable safePage = Objects.requireNonNull(pageable);
-        return clientRepository.findAll(safePage).map(ClientResponseDTO::fromEntity);
+
+        String nameFilter = (name != null && !name.isBlank()) ? "%" + name + "%" : null;
+
+        if (name == null) {
+            return clientRepository.findAll(safePage).map(ClientResponseDTO::fromEntity);
+        }
+        return clientRepository.findByFilters(nameFilter, safePage).map(ClientResponseDTO::fromEntity);
     }
 
     @Cacheable("clients")

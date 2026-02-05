@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.rafaeros.smp.modules.client.controller.dto.ClientResponseDTO;
@@ -36,8 +37,8 @@ public class ClientController {
 
     @GetMapping
     public ResponseEntity<Page<ClientResponseDTO>> getAll(
-            @PageableDefault(page = 0, size = 20) Pageable pageable) {
-        return ResponseEntity.ok(clientService.findAll(pageable));
+            @PageableDefault(page = 0, size = 20) Pageable pageable, @RequestParam(required = false) String name) {
+        return ResponseEntity.ok(clientService.findAll(pageable, name));
     }
 
     @GetMapping("/{id}")
