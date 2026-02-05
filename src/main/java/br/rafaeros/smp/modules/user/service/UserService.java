@@ -1,9 +1,10 @@
 package br.rafaeros.smp.modules.user.service;
 
-import java.util.List;
 import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -42,6 +43,9 @@ public class UserService implements UserDetailsService {
         }
 
         User user = new User();
+        user.setFirstName(dto.firstName());
+        user.setLastName(dto.lastName());
+        user.setEmail(dto.email());
         user.setUsername(dto.username());
         user.setPassword(passwordEncoder.encode(DEFAULT_PASSWORD));
         user.setRole(userRole);
@@ -51,11 +55,21 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserResponseDTO> findAll() {
-        return userRepository.findAll()
-                .stream()
-                .map(UserResponseDTO::fromEntity)
-                .toList();
+    public Page<UserResponseDTO> findAll(Pageable pageable, String firstName, String lastName, String username,
+            String email) {
+        Pageable safePage = Objects.requireNonNull(pageable);
+
+        if (firstName == null && lastName == null && username == null && email == null) {
+            return userRepository.findAll(safePage).map(UserResponseDTO::fromEntity);
+        }
+
+        String firstNameFilter = (firstName != null && !firstName.isBlank()) ? "%" + firstName + "%" : null;
+        String lastNameFilter = (lastName != null && !lastName.isBlank()) ? "%" + lastName + "%" : null;
+        String usernameFilter = (username != null && !username.isBlank()) ? "%" + username + "%" : null;
+        String emailFilter = (email != null && !email.isBlank()) ? "%" + email + "%" : null;
+
+        return userRepository.findByFilters(safePage, firstNameFilter, lastNameFilter, usernameFilter, emailFilter)
+                .map(UserResponseDTO::fromEntity);
     }
 
     @Transactional(readOnly = true)
