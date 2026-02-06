@@ -8,6 +8,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,8 +16,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import br.rafaeros.smp.modules.order.controller.dto.CreateOrderDTO;
 import br.rafaeros.smp.modules.order.controller.dto.OrderResponseDTO;
+import br.rafaeros.smp.modules.order.controller.dto.OrderSummaryDTO;
 import br.rafaeros.smp.modules.order.controller.dto.UpdateOrderDTO;
 import br.rafaeros.smp.modules.order.scraper.ErpSearchFilter;
 import br.rafaeros.smp.modules.order.service.OrderService;
@@ -44,8 +47,13 @@ public class OrderController {
 
     @GetMapping
     public ResponseEntity<Page<OrderResponseDTO>> getAll(
-            @PageableDefault(page = 0, size = 20) Pageable pageable) {
-        return ResponseEntity.ok(orderService.findAll(pageable));
+            @PageableDefault(page = 0, size = 20) Pageable pageable, @ModelAttribute OrderSearchFilter filter) {
+        return ResponseEntity.ok(orderService.findAll(pageable, filter));
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<Page<OrderSummaryDTO>> getSummary(@PageableDefault(page = 0, size = 20) Pageable pageable, @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(orderService.getSummary(pageable, search));
     }
 
     @GetMapping("/{id}")

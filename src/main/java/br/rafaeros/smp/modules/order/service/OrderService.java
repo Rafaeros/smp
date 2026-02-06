@@ -1,6 +1,9 @@
 package br.rafaeros.smp.modules.order.service;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -8,14 +11,17 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.rafaeros.smp.core.exception.BussinessException;
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
 import br.rafaeros.smp.core.utils.DateUtils;
 import br.rafaeros.smp.modules.client.model.Client;
 import br.rafaeros.smp.modules.client.service.ClientService;
+import br.rafaeros.smp.modules.order.controller.OrderSearchFilter;
 import br.rafaeros.smp.modules.order.controller.dto.CreateOrderDTO;
 import br.rafaeros.smp.modules.order.controller.dto.OrderResponseDTO;
+import br.rafaeros.smp.modules.order.controller.dto.OrderSummaryDTO;
 import br.rafaeros.smp.modules.order.controller.dto.UpdateOrderDTO;
 import br.rafaeros.smp.modules.order.model.Order;
 import br.rafaeros.smp.modules.order.model.enums.OrderStatus;
@@ -41,6 +47,7 @@ public class OrderService {
         this.scrapeService = scrapeService;
     }
 
+    @Transactional
     public List<OrderResponseDTO> syncFromErp(ErpSearchFilter filter, boolean force) {
         List<OrderScrapeDTO> dtos = scrapeService.fetchOrders(filter);
         if (dtos.isEmpty()) {
@@ -53,6 +60,7 @@ public class OrderService {
                 .toList();
     }
 
+    @Transactional
     public OrderResponseDTO createOrder(CreateOrderDTO dto) {
         Product product = productService.findByIdInternal(dto.productId());
         Client client = clientService.findByIdInternal(dto.clientId());
@@ -75,19 +83,81 @@ public class OrderService {
         return OrderResponseDTO.fromEntity(orderRepository.save(order));
     }
 
-    public Page<OrderResponseDTO> findAll(Pageable pageable) {
+    @Transactional(readOnly = true)
+    public Page<OrderResponseDTO> findAll(Pageable pageable, OrderSearchFilter filter) {
         Pageable safePage = Objects.requireNonNull(pageable);
-        return orderRepository.findAll(safePage).map(OrderResponseDTO::fromEntity);
+
+        String codeFilter = (filter.getCode() != null && !filter.getCode().isBlank())
+                ? "%" + filter.getCode() + "%"
+                : null;
+
+        String productCodeFilter = (filter.getProductCode() != null && !filter.getProductCode().isBlank())
+                ? "%" + filter.getProductCode() + "%"
+                : null;
+
+        Long clientIdFilter = null;
+        if (filter.getClientId() != null && !filter.getClientId().isBlank()) {
+            try {
+                clientIdFilter = Long.parseLong(filter.getClientId());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Id inválido", e);
+            }
+        }
+
+        OrderStatus statusFilter = null;
+        if (filter.getStatus() != null && !filter.getStatus().isBlank()
+                && !filter.getStatus().equalsIgnoreCase("Todos")) {
+            try {
+                statusFilter = OrderStatus.valueOf(filter.getStatus());
+            } catch (IllegalArgumentException e) {
+                throw new BussinessException("Status inválido");
+            }
+        }
+        Instant startDate = Instant.parse("1970-01-01T00:00:00Z");
+        Instant endDate = Instant.parse("2100-01-01T23:59:59Z");
+
+        try {
+            if (filter.getStartDeliveryDate() != null && !filter.getStartDeliveryDate().isBlank()) {
+                startDate = LocalDate.parse(filter.getStartDeliveryDate())
+                        .atStartOfDay(ZoneId.of("America/Sao_Paulo")).toInstant();
+            }
+            if (filter.getEndDeliveryDate() != null && !filter.getEndDeliveryDate().isBlank()) {
+                endDate = LocalDate.parse(filter.getEndDeliveryDate())
+                        .atTime(23, 59, 59).atZone(ZoneId.of("America/Sao_Paulo")).toInstant();
+            }
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Data inválida. Use o formato dd/MM/yyyy", e);
+        }
+
+        return orderRepository.findAllWithFilter(
+                safePage,
+                codeFilter,
+                productCodeFilter,
+                clientIdFilter,
+                statusFilter,
+                startDate,
+                endDate).map(OrderResponseDTO::fromEntity);
     }
 
+    @Transactional(readOnly = true)
+    public Page<OrderSummaryDTO> getSummary(Pageable pageable, String search) {
+        String searchTerm = (search != null && !search.isBlank())
+                ? "%" + search + "%"
+                : null;
+        return orderRepository.findSummary(pageable, searchTerm);
+    }
+
+    @Transactional(readOnly = true)
     public OrderResponseDTO findById(Long id) {
         return OrderResponseDTO.fromEntity(findByIdInternal(id));
     }
 
+    @Transactional(readOnly = true)
     public OrderResponseDTO findByCode(String code) {
         return OrderResponseDTO.fromEntity(findByCodeInternal(code));
     }
 
+    @Transactional
     public OrderResponseDTO updateOrder(Long id, UpdateOrderDTO dto) {
         Order existing = findByIdInternal(id);
 
@@ -108,6 +178,7 @@ public class OrderService {
         return OrderResponseDTO.fromEntity(orderRepository.save(existing));
     }
 
+    @Transactional
     public void deleteOrder(Long id) {
         Order order = findByIdInternal(id);
 
@@ -119,18 +190,21 @@ public class OrderService {
     }
 
     // Private Methods
+    @Transactional(readOnly = true)
     private Order findByIdInternal(Long id) {
         Long safeId = Objects.requireNonNull(id);
         return orderRepository.findById(safeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem não encontrada com o ID: " + id));
     }
 
+    @Transactional(readOnly = true)
     private Order findByCodeInternal(String code) {
         String safeCode = Objects.requireNonNull(code);
         return orderRepository.findByCode(safeCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem não encontrada com o código: " + code));
     }
 
+    @Transactional
     private Order processSingleOrder(OrderScrapeDTO dto, boolean force) {
         Optional<Order> existingOpt = orderRepository.findByCode(dto.code());
         if (existingOpt.isPresent()) {
@@ -144,12 +218,15 @@ public class OrderService {
         return createNewOrder(dto);
     }
 
+    @Transactional
     private Order updateOrderMetaData(Order existing, OrderScrapeDTO dto) {
         existing.setTotalQuantity(dto.totalQuantity());
         existing.setDeliveryDate(dto.deliveryDate());
+        existing.setStatus(mapStatus(dto.status()));
         return orderRepository.save(existing);
     }
 
+    @Transactional
     private Order createNewOrder(OrderScrapeDTO dto) {
         Product product = productService.findByCodeOrCreate(dto.productCode(), dto.productDescription());
         Client client = clientService.findByNameOrCreate(dto.clientName());
@@ -167,7 +244,7 @@ public class OrderService {
     }
 
     private OrderStatus mapStatus(String status) {
-        return switch (status) {
+        return switch (status.toUpperCase()) {
             case "LIBERADA" -> OrderStatus.RELEASED;
             case "INICIADA" -> OrderStatus.STARTED;
             case "FINALIZADA" -> OrderStatus.FINISHED;

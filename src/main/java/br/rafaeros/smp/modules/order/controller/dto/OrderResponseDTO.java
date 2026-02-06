@@ -5,8 +5,8 @@ import br.rafaeros.smp.modules.order.model.Order;
 public record OrderResponseDTO(
     Long id,
     String code,
-    String client,
-    String product,
+    String clientName,
+    String productCode,
     String creationDate,
     String deliveryDate,
     Integer totalQuantity,
