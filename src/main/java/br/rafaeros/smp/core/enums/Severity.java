@@ -1,4 +1,4 @@
-package br.rafaeros.smp.core.exception;
+package br.rafaeros.smp.core.enums;
 
 public enum Severity {
     ERROR,

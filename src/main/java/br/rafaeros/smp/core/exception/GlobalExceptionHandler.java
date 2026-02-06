@@ -1,6 +1,5 @@
 package br.rafaeros.smp.core.exception;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,63 +10,54 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import jakarta.servlet.http.HttpServletRequest;
+import br.rafaeros.smp.core.dto.ApiResponse;
+import br.rafaeros.smp.core.enums.Severity;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // 1. Handles Resource Not Found (404)
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleResourceNotFoundException(ResourceNotFoundException ex,
-            HttpServletRequest request) {
-        return buildErrorResponse(
-                HttpStatus.NOT_FOUND,
-                Severity.WARNING,
-                "Resource Not Found",
-                ex.getMessage(),
-                request);
+    public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        // Using the static helper method created in the DTO
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ex.getMessage(), Severity.WARNING));
     }
 
+    // 2. Handles Business Exception (400)
+    // Note: Consider renaming the class to BusinessException (typo fix) if possible
     @ExceptionHandler(BussinessException.class)
-    public ResponseEntity<Map<String, Object>> handleBussinessException(BussinessException ex,
-            HttpServletRequest request) {
-        return buildErrorResponse(
-                HttpStatus.BAD_REQUEST,
-                Severity.WARNING,
-                "Bussiness Exception",
-                ex.getMessage(),
-                request);
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BussinessException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getMessage(), Severity.WARNING));
     }
 
+    // 3. Handles @Valid validations (400)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationException(MethodArgumentNotValidException ex, HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = new HashMap<>();
+
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             fieldErrors.put(fieldName, errorMessage);
         });
 
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("severity", Severity.ERROR);
-        body.put("errorType", "Validation Error");
-        body.put("message", "Dados inválidos fornecidos.");
-        body.put("path", request.getRequestURI());
-        body.put("errors", fieldErrors);
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        // Using the builder/helper to include the map of errors
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.validationError("Invalid data provided.", fieldErrors));
     }
 
-    private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatus status, Severity severity,
-            String errorType, String message, HttpServletRequest request) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", status.value());
-        body.put("severity", severity);
-        body.put("errorType", errorType);
-        body.put("message", message);
-        body.put("path", request.getRequestURI());
-        return ResponseEntity.status(status).body(body);
+    // 4. (Optional) Internal Server Error Fallback (500)
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleGeneralException(Exception ex) {
+        ex.printStackTrace(); // It is good practice to log the actual error in the console/logs
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("An internal server error occurred.", Severity.ERROR));
     }
 }
