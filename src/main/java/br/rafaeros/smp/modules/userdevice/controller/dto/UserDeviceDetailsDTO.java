@@ -6,7 +6,7 @@ import br.rafaeros.smp.modules.device.model.enums.ProcessStatus;
 import br.rafaeros.smp.modules.userdevice.model.UserDevice;
 
 public record UserDeviceDetailsDTO(
-        Long userDeviceId,
+        Long id,
         String name,
         String macAddress,
         String ipAddress,
@@ -15,8 +15,9 @@ public record UserDeviceDetailsDTO(
         ProcessStage stage,
         String lastSeen,
         Double coordinateX,
-        Double coordinateY
-    ) {
+        Double coordinateY,
+        String createdAt,
+        String updatedAt) {
     public static UserDeviceDetailsDTO fromEntity(UserDevice userDevice) {
         return new UserDeviceDetailsDTO(
                 userDevice.getId(),
@@ -28,6 +29,8 @@ public record UserDeviceDetailsDTO(
                 userDevice.getDevice().getCurrentStage(),
                 userDevice.getDevice().getLastSeen().toString(),
                 userDevice.getCoordinateX(),
-                userDevice.getCoordinateY());
+                userDevice.getCoordinateY(),
+                userDevice.getDevice().getCreatedAt().toString(),
+                userDevice.getDevice().getUpdatedAt().toString());
     }
 }

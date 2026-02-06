@@ -3,6 +3,8 @@ package br.rafaeros.smp.modules.userdevice.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.rafaeros.smp.modules.user.model.User;
@@ -36,6 +39,15 @@ public class UserDeviceController {
             Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         return ResponseEntity.ok(userDeviceService.bindDeviceToUser(user.getId(), dto));
+    }
+
+    @GetMapping("/my-devices")
+    public ResponseEntity<List<UserDeviceMapResponseDTO>> getMyDevices(
+            @PageableDefault(page = 0, size = 10) Pageable pageable, Authentication authentication,
+            @RequestParam(required = false) String name, @RequestParam(required = false) String macAddress,
+            @RequestParam(required = false) String status) {
+        User user = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(userDeviceService.getMyDevices(pageable, user.getId(), name, macAddress, status));
     }
 
     @GetMapping("/my-map")

@@ -4,11 +4,14 @@ import java.util.List;
 import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
 import br.rafaeros.smp.modules.device.model.Device;
+import br.rafaeros.smp.modules.device.model.enums.DeviceStatus;
 import br.rafaeros.smp.modules.device.model.enums.ProcessStage;
 import br.rafaeros.smp.modules.device.repository.DeviceRepository;
 import br.rafaeros.smp.modules.user.model.User;
@@ -16,8 +19,8 @@ import br.rafaeros.smp.modules.user.model.enums.Role;
 import br.rafaeros.smp.modules.user.repository.UserRepository;
 import br.rafaeros.smp.modules.userdevice.controller.dto.DeviceBindingDTO;
 import br.rafaeros.smp.modules.userdevice.controller.dto.UpdateDeviceDetailsDTO;
-import br.rafaeros.smp.modules.userdevice.controller.dto.UserDeviceMapResponseDTO;
 import br.rafaeros.smp.modules.userdevice.controller.dto.UserDeviceDetailsDTO;
+import br.rafaeros.smp.modules.userdevice.controller.dto.UserDeviceMapResponseDTO;
 import br.rafaeros.smp.modules.userdevice.model.UserDevice;
 import br.rafaeros.smp.modules.userdevice.repository.UserDeviceRepository;
 
@@ -53,25 +56,44 @@ public class UserDeviceService {
     public List<UserDeviceMapResponseDTO> getMyMap(User user) {
 
         Long userId = user.getId();
-        
+
         if (user.getRole() == Role.ADMIN) {
             return userDeviceRepository.findAll()
                     .stream()
                     .map(UserDeviceMapResponseDTO::fromEntity)
                     .toList();
         }
-
-        return userDeviceRepository.findByUserId(userId)
+        return userDeviceRepository.findByUserId(userId, Sort.unsorted())
                 .stream()
                 .map(UserDeviceMapResponseDTO::fromEntity)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<UserDeviceDetailsDTO> getMyDevices(Long userId, Long deviceId) {
-        return userDeviceRepository.findByUserId(userId)
-                .stream()
-                .map(UserDeviceDetailsDTO::fromEntity)
+    public List<UserDeviceMapResponseDTO> getMyDevices(Pageable pageable, Long userId, String name, String macAddress, String status) {
+        Sort sort = pageable != null ? pageable.getSort() : Sort.by("name");
+        String nameFilter = (name != null && !name.isBlank()) ? "%" + name + "%" : null;
+        String macAddressFilter = (macAddress != null && !macAddress.isBlank()) ? "%" + macAddress + "%" : null;
+        DeviceStatus deviceStatus = (status != null && !status.isBlank()) ? DeviceStatus.valueOf(status.toUpperCase()) : null;
+        
+        boolean hasFilter = nameFilter != null || macAddressFilter != null || deviceStatus != null;
+
+        List<UserDevice> devices;
+
+        if (hasFilter) {
+             devices = userDeviceRepository.findByUserIdWithFilter(
+                userId, 
+                nameFilter, 
+                macAddressFilter, 
+                deviceStatus, 
+                sort
+            );
+        } else {
+            devices = userDeviceRepository.findByUserId(userId, sort);
+        }
+
+        return devices.stream()
+                .map(UserDeviceMapResponseDTO::fromEntity)
                 .toList();
     }
 
@@ -102,21 +124,17 @@ public class UserDeviceService {
 
         UserDevice updated = userDeviceRepository.save(userDevice);
         return UserDeviceDetailsDTO.fromEntity(updated);
-
     }
 
     @Transactional
     public void unbindDevice(Long userDeviceId, Long userId) {
-        
         UserDevice userDevice = userDeviceRepository.findByIdAndUserId(userDeviceId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo do usuário não encontrado"));
 
-        if (userDevice == null) {
-            throw new ResourceNotFoundException("Dispositivo do usuário nao encontrado");
+        if (userDevice.getDevice() == null) {
+            throw new ResourceNotFoundException("Dispositivo associado não encontrado");
         }
 
         userDeviceRepository.delete(userDevice);
     }
-
-
 }
