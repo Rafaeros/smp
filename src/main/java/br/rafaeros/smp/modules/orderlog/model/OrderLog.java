@@ -1,4 +1,4 @@
-package br.rafaeros.smp.modules.orderLog.model;
+package br.rafaeros.smp.modules.orderlog.model;
 
 import java.time.Instant;
 

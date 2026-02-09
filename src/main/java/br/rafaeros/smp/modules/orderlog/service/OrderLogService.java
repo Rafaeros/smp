@@ -1,0 +1,38 @@
+package br.rafaeros.smp.modules.orderlog.service;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import br.rafaeros.smp.modules.orderlog.controller.dto.OrderLogResponseDTO;
+import br.rafaeros.smp.modules.orderlog.controller.dto.OrderStatsDTO;
+import br.rafaeros.smp.modules.orderlog.controller.dto.ProductStatsDTO;
+import br.rafaeros.smp.modules.orderlog.repository.OrderLogRepository;
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class OrderLogService {
+
+    private final OrderLogRepository repository;
+
+    // --- FEATURE: List ---
+
+    public Page<OrderLogResponseDTO> findLogsByOrder(Pageable pageable, Long orderId) {
+        return repository.findByOrderId(pageable, orderId).map(OrderLogResponseDTO::fromEntity);
+    }
+
+    public Page<OrderLogResponseDTO> findLogsByProduct(Long productId, Pageable pageable) {
+        return repository.findByOrder_Product_Id(productId, pageable).map(OrderLogResponseDTO::fromEntity);
+    }
+
+    // --- FEATURE: DASHBOARD/KPI ---
+
+    public OrderStatsDTO findOrderStats(Long orderId) {
+        return repository.getStatsByOrder(orderId);
+    }
+
+    public ProductStatsDTO findProductStats(Long productId) {
+        return repository.getStatsByProduct(productId);
+    }
+}

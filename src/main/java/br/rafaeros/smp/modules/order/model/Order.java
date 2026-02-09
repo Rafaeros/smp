@@ -3,10 +3,13 @@ package br.rafaeros.smp.modules.order.model;
 import java.time.Instant;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import br.rafaeros.smp.core.model.BaseEntity;
 import br.rafaeros.smp.modules.client.model.Client;
+import br.rafaeros.smp.modules.device.model.Device;
 import br.rafaeros.smp.modules.order.model.enums.OrderStatus;
-import br.rafaeros.smp.modules.orderLog.model.OrderLog;
+import br.rafaeros.smp.modules.orderlog.model.OrderLog;
 import br.rafaeros.smp.modules.product.model.Product;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -33,7 +36,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Order extends BaseEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true, nullable = false)
@@ -56,6 +60,11 @@ public class Order extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "currentOrder", fetch = FetchType.LAZY)
+    private List<Device> activeDevices;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
     private List<OrderLog> orderLog;
 }

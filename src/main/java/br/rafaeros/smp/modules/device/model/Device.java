@@ -6,13 +6,17 @@ import br.rafaeros.smp.core.model.BaseEntity;
 import br.rafaeros.smp.modules.device.model.enums.DeviceStatus;
 import br.rafaeros.smp.modules.device.model.enums.ProcessStage;
 import br.rafaeros.smp.modules.device.model.enums.ProcessStatus;
+import br.rafaeros.smp.modules.order.model.Order;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -40,6 +44,10 @@ public class Device extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     private ProcessStage currentStage = ProcessStage.PANEL_ASSEMBLY;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "current_order_id")
+    private Order currentOrder;
 
     @Enumerated(EnumType.STRING)
     private ProcessStatus processStatus;
