@@ -10,9 +10,10 @@ public enum ProcessStage {
     PACKAGING,
     TESTING;
 
-    @JsonCreator
+@JsonCreator
     public static ProcessStage fromString(String value) {
-        if (value == null) {
+
+        if (value == null || value.isBlank()) {
             return null;
         }
         try {
@@ -20,6 +21,5 @@ public enum ProcessStage {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Estágio inválido. Use: " + java.util.Arrays.toString(values()));
         }
-
     }
 }

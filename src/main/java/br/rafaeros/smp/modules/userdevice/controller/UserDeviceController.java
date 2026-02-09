@@ -66,11 +66,15 @@ public class UserDeviceController {
                 ApiResponse.success("Dispositivo Listado com sucesso!", userDeviceService.findById(id, user.getId())));
     }
 
-    @PatchMapping("/{id}")
+@PatchMapping("/{id}")
     @PreAuthorize("@deviceSecurity.canAccess(#id, principal)")
-    public ResponseEntity<ApiResponse<UserDeviceDetailsDTO>> updateDeviceDetails(@PathVariable Long id,
-            @RequestBody @Valid UpdateDeviceDetailsDTO dto, @AuthenticationPrincipal User user) {
+    public ResponseEntity<ApiResponse<UserDeviceDetailsDTO>> updateDeviceDetails(
+            @PathVariable Long id,
+            @RequestBody UpdateDeviceDetailsDTO dto,
+            @AuthenticationPrincipal User user) {
+        
         UserDeviceDetailsDTO userDevice = userDeviceService.updateDeviceDetails(id, user.getId(), dto);
+        
         return ResponseEntity.ok(ApiResponse.success("Dispositivo atualizado com sucesso!", userDevice));
     }
 

@@ -13,6 +13,8 @@ import br.rafaeros.smp.core.exception.ResourceNotFoundException;
 import br.rafaeros.smp.modules.device.model.Device;
 import br.rafaeros.smp.modules.device.model.enums.DeviceStatus;
 import br.rafaeros.smp.modules.device.repository.DeviceRepository;
+import br.rafaeros.smp.modules.order.model.Order;
+import br.rafaeros.smp.modules.order.repository.OrderRepository;
 import br.rafaeros.smp.modules.user.model.User;
 import br.rafaeros.smp.modules.user.model.enums.Role;
 import br.rafaeros.smp.modules.user.repository.UserRepository;
@@ -29,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 public class UserDeviceService {
     private final UserDeviceRepository userDeviceRepository;
     private final DeviceRepository deviceRepository;
+    private final OrderRepository orderRepository;
     private final UserRepository userRepository;
 
     @Transactional
@@ -113,20 +116,28 @@ public class UserDeviceService {
     }
 
     @Transactional
+    // Note que removemos o ID do DTO, usamos apenas o userDeviceId que vem da URL
     public UserDeviceDetailsDTO updateDeviceDetails(Long userDeviceId, Long userId, UpdateDeviceDetailsDTO dto) {
         UserDevice userDevice = userDeviceRepository.findByIdAndUserId(userDeviceId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo do usuário não encontrado"));
 
         if (userDevice.getDevice() == null) {
-            throw new ResourceNotFoundException("Dispositivo associado não encontrado");
+            throw new ResourceNotFoundException("Dispositivo físico associado não encontrado");
         }
 
-        if (dto.name() != null) {
+        if (dto.name() != null && !dto.name().isBlank()) {
             userDevice.setName(dto.name());
         }
-
         if (dto.processStage() != null) {
             userDevice.getDevice().setCurrentStage(dto.processStage());
+        }
+
+        if (dto.orderId() != null) {
+            Long safeId = Objects.requireNonNull(dto.orderId());
+            Order order = orderRepository.findById(safeId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Ordem de Produção não encontrada"));
+
+            userDevice.getDevice().setCurrentOrder(order);
         }
 
         UserDevice updated = userDeviceRepository.save(userDevice);
