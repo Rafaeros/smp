@@ -7,21 +7,19 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import br.rafaeros.smp.core.exception.BussinessException;
+import br.rafaeros.smp.core.exception.BusinessException;
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
 import br.rafaeros.smp.modules.product.controller.dto.CreateProductDTO;
 import br.rafaeros.smp.modules.product.controller.dto.ProductResponseDTO;
 import br.rafaeros.smp.modules.product.model.Product;
 import br.rafaeros.smp.modules.product.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class ProductService {
 
     private final ProductRepository productRepository;
-
-    public ProductService(ProductRepository productRepository) {
-        this.productRepository = productRepository;
-    }
 
     public ProductResponseDTO createProduct(CreateProductDTO dto) {
         boolean exits = productRepository.existsByCode(dto.code());
@@ -76,7 +74,7 @@ public class ProductService {
         try {
             productRepository.deleteById(safeId);
         } catch (DataIntegrityViolationException e) {
-            throw new BussinessException(
+            throw new BusinessException(
                     "Não é possível excluir este produto pois ele já possui Ordens de Produção vinculadas.");
         }
     }

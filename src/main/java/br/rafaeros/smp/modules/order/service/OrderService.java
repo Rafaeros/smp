@@ -13,7 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import br.rafaeros.smp.core.exception.BussinessException;
+import br.rafaeros.smp.core.exception.BusinessException;
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
 import br.rafaeros.smp.core.utils.DateUtils;
 import br.rafaeros.smp.modules.client.model.Client;
@@ -30,22 +30,16 @@ import br.rafaeros.smp.modules.order.scraper.ErpSearchFilter;
 import br.rafaeros.smp.modules.order.scraper.OrderScrapeDTO;
 import br.rafaeros.smp.modules.product.model.Product;
 import br.rafaeros.smp.modules.product.service.ProductService;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductService productService;
     private final ClientService clientService;
     private final ErpScraperService scrapeService;
-
-    public OrderService(OrderRepository orderRepository, ProductService productService, ClientService clientService,
-            ErpScraperService scrapeService) {
-        this.orderRepository = orderRepository;
-        this.productService = productService;
-        this.clientService = clientService;
-        this.scrapeService = scrapeService;
-    }
 
     @Transactional
     public List<OrderResponseDTO> syncFromErp(ErpSearchFilter filter, boolean force) {
@@ -67,7 +61,7 @@ public class OrderService {
         Optional<Order> existingOpt = orderRepository.findByCode(dto.code());
 
         if (existingOpt.isPresent()) {
-            throw new BussinessException("Ja existe uma OP com o codigo: " + dto.code());
+            throw new BusinessException("Ja existe uma OP com o codigo: " + dto.code());
         }
 
         Order order = new Order();
@@ -110,7 +104,7 @@ public class OrderService {
             try {
                 statusFilter = OrderStatus.valueOf(filter.getStatus());
             } catch (IllegalArgumentException e) {
-                throw new BussinessException("Status inválido");
+                throw new BusinessException("Status inválido");
             }
         }
         Instant startDate = Instant.parse("1970-01-01T00:00:00Z");

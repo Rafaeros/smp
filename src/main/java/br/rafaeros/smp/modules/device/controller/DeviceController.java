@@ -2,7 +2,6 @@ package br.rafaeros.smp.modules.device.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,66 +14,76 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.rafaeros.smp.core.dto.ApiResponse;
 import br.rafaeros.smp.modules.device.controller.dto.CreateDeviceRequestDTO;
 import br.rafaeros.smp.modules.device.controller.dto.DeviceDetailsResponseDTO;
 import br.rafaeros.smp.modules.device.controller.dto.DeviceResponseDTO;
 import br.rafaeros.smp.modules.device.controller.dto.UpdateDeviceDTO;
 import br.rafaeros.smp.modules.device.service.DeviceService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/devices")
+@RequiredArgsConstructor
 public class DeviceController {
 
-    @Autowired
-    private DeviceService deviceService;
+    private final DeviceService deviceService;
+
+    @GetMapping("/available")
+    public ResponseEntity<ApiResponse<List<DeviceResponseDTO>>> getAllAvailableDevices() {
+        return ResponseEntity.ok(ApiResponse.success("Dispositivos disponíveis listados com sucesso.",
+                deviceService.findAllAvailableDevices()));
+    }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<DeviceResponseDTO> createDevice(@RequestBody @Valid CreateDeviceRequestDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(deviceService.createDevice(dto));
+    public ResponseEntity<ApiResponse<DeviceResponseDTO>> createDevice(@RequestBody @Valid CreateDeviceRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Dispositivo criado com sucesso!", deviceService.createDevice(dto)));
     }
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<DeviceResponseDTO>> getAllDevices() {
-        return ResponseEntity.ok(deviceService.findAll());
-    }
-
-    @GetMapping("/available")
-    public ResponseEntity<List<DeviceResponseDTO>> getAllAvailableDevices() {
-        return ResponseEntity.ok(deviceService.findAvailableDevices());
+    public ResponseEntity<ApiResponse<List<DeviceResponseDTO>>> getAllDevices() {
+        return ResponseEntity.ok(ApiResponse.success("Dispositivos listados com sucesso.", deviceService.findAll()));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("@deviceSecurity.canAccess(#id, authentication)")
-    public ResponseEntity<DeviceDetailsResponseDTO> getDeviceById(@PathVariable Long id) {
-        return ResponseEntity.ok(deviceService.findById(id));
+    public ResponseEntity<ApiResponse<DeviceDetailsResponseDTO>> getDeviceById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success("Dispositivo encontrado.", deviceService.findById(id)));
     }
 
     @GetMapping("/mac/{macAddress}")
     @PreAuthorize("@deviceSecurity.canAccessByMac(#macAddress, authentication)")
-    public ResponseEntity<DeviceDetailsResponseDTO> getDeviceByMacAddress(@PathVariable String macAddress) {
-        return ResponseEntity.ok(deviceService.findByMacAddress(macAddress));
+    public ResponseEntity<ApiResponse<DeviceDetailsResponseDTO>> getDeviceByMacAddress(
+            @PathVariable String macAddress) {
+        return ResponseEntity
+                .ok(ApiResponse.success("Dispositivo encontrado.", deviceService.findByMacAddress(macAddress)));
     }
 
     @PatchMapping("/update/{id}")
     @PreAuthorize("@deviceSecurity.canAccess(#id, authentication)")
-    public ResponseEntity<DeviceResponseDTO> updateDeviceById(@PathVariable Long id, @RequestBody @Valid UpdateDeviceDTO dto) {
-        return ResponseEntity.ok(deviceService.updateById(id, dto));
+    public ResponseEntity<ApiResponse<DeviceResponseDTO>> updateDeviceById(@PathVariable Long id,
+            @RequestBody @Valid UpdateDeviceDTO dto) {
+        return ResponseEntity
+                .ok(ApiResponse.success("Dispositivo atualizado com sucesso!", deviceService.updateById(id, dto)));
     }
 
     @PatchMapping("/update/mac/{macAddress}")
     @PreAuthorize("@deviceSecurity.canAccessByMac(#macAddress, authentication)")
-    public ResponseEntity<DeviceResponseDTO> updateDeviceByMacAddress(@PathVariable String macAddress, @RequestBody @Valid UpdateDeviceDTO dto) {
-        return ResponseEntity.ok(deviceService.updateByMacAddress(macAddress, dto));
+    public ResponseEntity<ApiResponse<DeviceResponseDTO>> updateDeviceByMacAddress(@PathVariable String macAddress,
+            @RequestBody @Valid UpdateDeviceDTO dto) {
+        return ResponseEntity.ok(ApiResponse.success("Dispositivo atualizado com sucesso!",
+                deviceService.updateByMacAddress(macAddress, dto)));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteDeviceById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteDeviceById(@PathVariable Long id) {
         deviceService.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("Dispositivo removido com sucesso!"));
     }
 
 }

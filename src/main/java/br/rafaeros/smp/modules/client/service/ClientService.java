@@ -13,15 +13,13 @@ import br.rafaeros.smp.modules.client.controller.dto.ClientResponseDTO;
 import br.rafaeros.smp.modules.client.controller.dto.CreateClientDTO;
 import br.rafaeros.smp.modules.client.model.Client;
 import br.rafaeros.smp.modules.client.repository.ClientRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class ClientService {
 
     private final ClientRepository clientRepository;
-
-    public ClientService(ClientRepository clientRepository) {
-        this.clientRepository = clientRepository;
-    }
 
     public ClientResponseDTO createClient(CreateClientDTO dto) {
         Client client = new Client();

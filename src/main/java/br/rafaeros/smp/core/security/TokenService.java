@@ -16,7 +16,7 @@ import br.rafaeros.smp.modules.user.model.User;
 
 @Service
 public class TokenService {
-    
+
     @Value("${jwt.secret}")
     private String secret;
 
@@ -24,10 +24,13 @@ public class TokenService {
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return JWT.create()
-                .withIssuer("smp-api")
-                .withSubject(user.getUsername())
-                .withExpiresAt(generateExpirationDate())
-                .sign(algorithm);
+                    .withIssuer("smp-api")
+                    .withSubject(user.getUsername())
+                    .withClaim("id", user.getId())
+                    .withClaim("role", user.getRole().name())
+                    .withClaim("username", user.getUsername())
+                    .withExpiresAt(generateExpirationDate())
+                    .sign(algorithm);
         } catch (JWTCreationException exception) {
             throw new RuntimeException("Erro ao gerar JWT Token", exception);
         }

@@ -1,4 +1,4 @@
-package br.rafaeros.smp.modules.infraestructure.tcp;
+package br.rafaeros.smp.modules.infra.tcp;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,23 +9,23 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.rafaeros.smp.modules.device.model.enums.DeviceStatus;
 import br.rafaeros.smp.modules.device.service.DeviceService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class TcpServerService {
 
-    @Autowired
-    private DeviceService deviceService;
+    private final DeviceService deviceService;
+    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     private ServerSocket serverSocket;
 
-    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     @PostConstruct
     public void startServer() {

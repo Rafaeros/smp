@@ -39,7 +39,7 @@ public class Device extends BaseEntity {
     private DeviceStatus status;
 
     @Enumerated(EnumType.STRING)
-    private ProcessStage currentStage;
+    private ProcessStage currentStage = ProcessStage.PANEL_ASSEMBLY;
 
     @Enumerated(EnumType.STRING)
     private ProcessStatus processStatus;

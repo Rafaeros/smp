@@ -17,12 +17,12 @@ import lombok.Setter;
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 public class BaseEntity {
-    
+
     @CreatedDate
-    @Column(name="created_at", updatable = false, nullable = false)
+    @Column(name = "created_at", updatable = false, nullable = false)
     private Instant createdAt;
 
     @LastModifiedDate
-    @Column(name="updated_at")
+    @Column(name = "updated_at")
     private Instant updatedAt;
 }

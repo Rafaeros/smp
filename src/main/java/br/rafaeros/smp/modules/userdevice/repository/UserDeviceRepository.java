@@ -16,18 +16,21 @@ import br.rafaeros.smp.modules.userdevice.model.UserDevice;
 public interface UserDeviceRepository extends JpaRepository<UserDevice, Long> {
 
     @Query("SELECT ud FROM UserDevice ud JOIN FETCH ud.device WHERE ud.user.id = :userId")
-    List<UserDevice> findByUserId(@Param("userId") Long userId, Sort sort);
+    List<UserDevice> findByUserId(@Param("userId") Long userId);
 
     @Query("SELECT ud FROM UserDevice ud JOIN FETCH ud.device WHERE ud.user.id = :userId AND " +
-           "(:name IS NULL OR LOWER(CAST(ud.name AS string)) LIKE LOWER(CAST(:name AS string))) AND " +
-           "(:macAddress IS NULL OR LOWER(CAST(ud.device.macAddress AS string)) LIKE LOWER(CAST(:macAddress AS string))) AND " +
-           "(:status IS NULL OR ud.device.status = :status)")
+            "(:name IS NULL OR LOWER(CAST(ud.name AS string)) LIKE LOWER(CAST(:name AS string))) AND " +
+            "(:macAddress IS NULL OR LOWER(CAST(ud.device.macAddress AS string)) LIKE LOWER(CAST(:macAddress AS string))) AND "
+            +
+            "(:status IS NULL OR ud.device.status = :status)")
     List<UserDevice> findByUserIdWithFilter(
             @Param("userId") Long userId,
             @Param("name") String name,
             @Param("macAddress") String macAddress,
             @Param("status") DeviceStatus status,
             Sort sort);
+
+    boolean existsByDeviceId(Long deviceId);
 
     boolean existsByUserIdAndDeviceId(Long userId, Long deviceId);
 

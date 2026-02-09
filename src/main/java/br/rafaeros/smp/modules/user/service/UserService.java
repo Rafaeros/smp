@@ -12,9 +12,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import br.rafaeros.smp.core.exception.BussinessException;
+import br.rafaeros.smp.core.exception.BusinessException;
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
 import br.rafaeros.smp.modules.user.controller.dto.CreateUserRequestDTO;
+import br.rafaeros.smp.modules.user.controller.dto.UpdateUserRequestDTO;
 import br.rafaeros.smp.modules.user.controller.dto.UserResponseDTO;
 import br.rafaeros.smp.modules.user.model.User;
 import br.rafaeros.smp.modules.user.model.enums.Role;
@@ -32,14 +33,14 @@ public class UserService implements UserDetailsService {
     public UserResponseDTO createUser(CreateUserRequestDTO dto) {
 
         if (userRepository.existsByUsername(dto.username())) {
-            throw new BussinessException("Nome de usuario ja cadastrado");
+            throw new BusinessException("Nome de usuário ja cadastrado");
         }
 
         Role userRole;
         try {
             userRole = Role.valueOf(dto.role());
         } catch (IllegalArgumentException e) {
-            throw new BussinessException("Cargo não encontrado");
+            throw new BusinessException("Cargo não encontrado");
         }
 
         User user = new User();
@@ -81,7 +82,7 @@ public class UserService implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserResponseDTO findByUsername(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário nao encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
         return UserResponseDTO.fromEntity(user);
     }
 
@@ -92,10 +93,42 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public UserResponseDTO update(Long id, CreateUserRequestDTO dto) {
+    public UserResponseDTO update(Long id, UpdateUserRequestDTO dto) {
         User user = findByIdInternal(id);
-        user.setUsername(dto.username());
-        user.setRole(Role.valueOf(dto.role()));
+
+        if (user == null) {
+            throw new ResourceNotFoundException("Usuário não encontrado com ID:" + id);
+        }
+
+        if (dto.firstName() != null) {
+            user.setFirstName(dto.firstName());
+        }
+
+        if (dto.lastName() != null) {
+            user.setLastName(dto.lastName());
+        }
+
+        if (dto.username() != null) {
+            if (userRepository.existsByUsername(dto.username())) {
+                throw new BusinessException("Nome de usuário já cadastrado.");
+            }
+            user.setUsername(dto.username());
+        }
+
+        if (dto.email() != null) {
+            user.setEmail(dto.email());
+        }
+
+        if (dto.role() != null) {
+            Role userRole;
+            try {
+                userRole = Role.valueOf(dto.role());
+            } catch (IllegalArgumentException e) {
+                throw new BusinessException("Cargo não encontrado");
+            }
+            user.setRole(userRole);
+        }
+
         User savedUser = userRepository.save(user);
         return UserResponseDTO.fromEntity(savedUser);
     }
@@ -111,7 +144,7 @@ public class UserService implements UserDetailsService {
         User user = findByIdInternal(id);
 
         if (user == null) {
-            throw new ResourceNotFoundException("Usuário nao encontrado");
+            throw new ResourceNotFoundException("Usuário não encontrado");
         }
 
         userRepository.delete(user);

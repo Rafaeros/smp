@@ -14,52 +14,50 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.rafaeros.smp.core.dto.ApiResponse;
 import br.rafaeros.smp.modules.product.controller.dto.CreateProductDTO;
 import br.rafaeros.smp.modules.product.controller.dto.ProductResponseDTO;
 import br.rafaeros.smp.modules.product.service.ProductService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/products")
+@RequiredArgsConstructor
 public class ProductController {
 
     private final ProductService productService;
 
-    public ProductController(ProductService productService) {
-        this.productService = productService;
-    }
-
     @PostMapping
-    public ResponseEntity<ProductResponseDTO> createProduct(@RequestBody @Valid CreateProductDTO dto) {
-        return ResponseEntity.status(201).body(productService.createProduct(dto));
+    public ResponseEntity<ApiResponse<ProductResponseDTO>> createProduct(@RequestBody @Valid CreateProductDTO dto) {
+        return ResponseEntity.status(201)
+                .body(ApiResponse.success("Produto criado com sucesso!", productService.createProduct(dto)));
     }
 
     @GetMapping
-    public ResponseEntity<Page<ProductResponseDTO>> getAll(@PageableDefault(size = 20, page = 0) Pageable pageable,
+    public ResponseEntity<ApiResponse<Page<ProductResponseDTO>>> getAll(
+            @PageableDefault(size = 20, page = 0) Pageable pageable,
             @RequestParam(required = false) String code, @RequestParam(required = false) String description) {
-        return ResponseEntity.ok(productService.findAll(pageable, code, description));
+        return ResponseEntity.ok(ApiResponse.success("Produtos listados com sucesso.",
+                productService.findAll(pageable, code, description)));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductResponseDTO> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(productService.findById(id));
-    }
-
-    @GetMapping("/code/{code}")
-    public ResponseEntity<ProductResponseDTO> getByCode(@PathVariable String code) {
-        return ResponseEntity.ok(productService.findByCode(code));
+    public ResponseEntity<ApiResponse<ProductResponseDTO>> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success("Produto encontrado.", productService.findById(id)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductResponseDTO> updateProduct(@PathVariable Long id,
+    public ResponseEntity<ApiResponse<ProductResponseDTO>> updateProduct(@PathVariable Long id,
             @RequestBody @Valid CreateProductDTO dto) {
-        return ResponseEntity.ok(productService.updateProduct(id, dto));
+        return ResponseEntity
+                .ok(ApiResponse.success("Produto atualizado com sucesso!", productService.updateProduct(id, dto)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("Produto removido com sucesso!"));
     }
 
 }

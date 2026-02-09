@@ -5,8 +5,10 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,9 +20,8 @@ import br.rafaeros.smp.core.enums.Severity;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-
     // Disables Invalid Credentials (Incorrect Login) -> 401 Unauthorized
-    @ExceptionHandler({BadCredentialsException.class, InternalAuthenticationServiceException.class})
+    @ExceptionHandler({ BadCredentialsException.class, InternalAuthenticationServiceException.class })
     public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(Exception ex) {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
@@ -38,8 +39,8 @@ public class GlobalExceptionHandler {
 
     // Handles Business Exception (400)
     // Note: Consider renaming the class to BusinessException (typo fix) if possible
-    @ExceptionHandler(BussinessException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BussinessException ex) {
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error(ex.getMessage(), Severity.WARNING));
@@ -59,7 +60,15 @@ public class GlobalExceptionHandler {
         // Using the builder/helper to include the map of errors
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.validationError("Invalid data provided.", fieldErrors));
+                .body(ApiResponse.validationError("Campos inválidos.", fieldErrors));
+    }
+
+    @ExceptionHandler({ AccessDeniedException.class, AuthorizationDeniedException.class })
+    public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(Exception ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error("Acesso negado: Você não tem permissão para realizar esta ação.",
+                        Severity.ERROR));
     }
 
     // (Optional) Internal Server Error Fallback (500)
@@ -69,6 +78,6 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("An internal server error occurred.", Severity.ERROR));
+                .body(ApiResponse.error("Ocorreu um erro interno no servidor.", Severity.ERROR));
     }
 }

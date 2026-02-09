@@ -6,12 +6,17 @@ public record UserResponseDTO(
         Long id,
         String firstName,
         String lastName,
-        String username) {
+        String username,
+        String email,
+        String role
+    ) {
     public static UserResponseDTO fromEntity(User user) {
         return new UserResponseDTO(
                 user.getId(),
                 user.getFirstName(),
                 user.getLastName(),
-                user.getUsername());
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().name());
     }
 }

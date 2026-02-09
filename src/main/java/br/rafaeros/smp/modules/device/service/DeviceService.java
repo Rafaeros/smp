@@ -4,11 +4,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import br.rafaeros.smp.core.exception.BussinessException;
+import br.rafaeros.smp.core.exception.BusinessException;
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
 import br.rafaeros.smp.modules.device.controller.dto.CreateDeviceRequestDTO;
 import br.rafaeros.smp.modules.device.controller.dto.DeviceDetailsResponseDTO;
@@ -18,18 +17,19 @@ import br.rafaeros.smp.modules.device.model.Device;
 import br.rafaeros.smp.modules.device.model.enums.DeviceStatus;
 import br.rafaeros.smp.modules.device.model.enums.ProcessStatus;
 import br.rafaeros.smp.modules.device.repository.DeviceRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class DeviceService {
 
-    @Autowired
-    private DeviceRepository deviceRepository;
+    private final DeviceRepository deviceRepository;
 
     @Transactional
     public DeviceResponseDTO createDevice(CreateDeviceRequestDTO dto) {
         boolean exists = deviceRepository.existsByMacAddress(dto.macAddress());
         if (exists) {
-            throw new BussinessException("Dispositivo com o MAC " + dto.macAddress() + " ja cadastrado.");
+            throw new BusinessException("Dispositivo com o MAC " + dto.macAddress() + " ja cadastrado.");
         }
         Device device = new Device();
         device.setMacAddress(dto.macAddress());
@@ -68,7 +68,7 @@ public class DeviceService {
     }
 
     @Transactional(readOnly = true)
-    public List<DeviceResponseDTO> findAvailableDevices() {
+    public List<DeviceResponseDTO> findAllAvailableDevices() {
         return deviceRepository.findAllAvailable()
                 .stream()
                 .map(DeviceResponseDTO::fromEntity)
