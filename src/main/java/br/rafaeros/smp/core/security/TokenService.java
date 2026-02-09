@@ -26,9 +26,6 @@ public class TokenService {
             return JWT.create()
                     .withIssuer("smp-api")
                     .withSubject(user.getUsername())
-                    .withClaim("id", user.getId())
-                    .withClaim("role", user.getRole().name())
-                    .withClaim("username", user.getUsername())
                     .withExpiresAt(generateExpirationDate())
                     .sign(algorithm);
         } catch (JWTCreationException exception) {
