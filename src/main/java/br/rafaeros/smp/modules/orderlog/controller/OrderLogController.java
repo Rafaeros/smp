@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.rafaeros.smp.core.dto.ApiResponse;
+import br.rafaeros.smp.modules.orderlog.controller.dto.IOrderStats;
+import br.rafaeros.smp.modules.orderlog.controller.dto.IProductStats;
 import br.rafaeros.smp.modules.orderlog.controller.dto.OrderLogResponseDTO;
-import br.rafaeros.smp.modules.orderlog.controller.dto.OrderStatsDTO;
-import br.rafaeros.smp.modules.orderlog.controller.dto.ProductStatsDTO;
 import br.rafaeros.smp.modules.orderlog.service.OrderLogService;
 import lombok.RequiredArgsConstructor;
 
@@ -38,13 +38,13 @@ public class OrderLogController {
     }
 
     @GetMapping("/stats/order/{orderId}")
-    public ResponseEntity<ApiResponse<OrderStatsDTO>> getOrderStats(@PathVariable Long orderId) {
+    public ResponseEntity<ApiResponse<IOrderStats>> getOrderStats(@PathVariable Long orderId) {
         return ResponseEntity
                 .ok(ApiResponse.success("Logs listados com sucesso.", orderLogService.findOrderStats(orderId)));
     }
 
     @GetMapping("/stats/product/{productId}")
-    public ResponseEntity<ApiResponse<ProductStatsDTO>> getProductStats(@PathVariable Long productId) {
+    public ResponseEntity<ApiResponse<IProductStats>> getProductStats(@PathVariable Long productId) {
         return ResponseEntity.ok(ApiResponse.success("Logs listados com sucesso.",
                 orderLogService.findProductStats(productId)));
     }

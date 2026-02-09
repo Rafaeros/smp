@@ -7,41 +7,43 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import br.rafaeros.smp.modules.orderlog.controller.dto.OrderStatsDTO;
-import br.rafaeros.smp.modules.orderlog.controller.dto.ProductStatsDTO;
+// Importe as interfaces
+import br.rafaeros.smp.modules.orderlog.controller.dto.IOrderStats;
+import br.rafaeros.smp.modules.orderlog.controller.dto.IProductStats;
 import br.rafaeros.smp.modules.orderlog.model.OrderLog;
 
 @Repository
 public interface OrderLogRepository extends JpaRepository<OrderLog, Long> {
-    Page<OrderLog> findByOrderId(Pageable Pageable, Long orderId);
-    Page<OrderLog> findByOrder_Product_Id(Long productId, Pageable pageable);
-    @Query("""
-        SELECT new br.rafaeros.smp.modules.orderlog.dto.OrderStatusDTO(
-            COUNT(l),
-            AVG(l.cycleTime),
-            MIN(l.cycleTime),
-            MAX(l.cycleTime),
-            SUM(l.quantityProduced)
-        )
-        FROM OrderLog l
-        WHERE l.order.id = :orderId
-    """)
-    OrderStatsDTO getStatsByOrder(@Param("orderId") Long orderId);
 
-    // Estatísticas do PRODUTO (Soma de todas as OPs daquele produto)
+    Page<OrderLog> findByOrderId(Long orderId, Pageable pageable);
+
+    Page<OrderLog> findByOrder_Product_Id(Long productId, Pageable pageable);
+
     @Query("""
-        SELECT new br.rafaeros.smp.modules.orderlog.dto.ProductStatsDTO(
-            p.name,
-            COUNT(l),
-            AVG(l.cycleTime),
-            MIN(l.cycleTime),
-            MAX(l.cycleTime)
-        )
-        FROM OrderLog l
-        JOIN l.order o
-        JOIN o.product p
-        WHERE p.id = :productId
-        GROUP BY p.name
-    """)
-    ProductStatsDTO getStatsByProduct(@Param("productId") Long productId);
+                SELECT
+                    COUNT(l) AS totalLogs,
+                    AVG(l.cycleTime) AS avgCycleTime,
+                    MIN(l.cycleTime) AS minCycleTime,
+                    MAX(l.cycleTime) AS maxCycleTime,
+                    SUM(l.quantityProduced) AS quantityProduced
+                FROM OrderLog l
+                WHERE l.order.id = :orderId
+            """)
+    IOrderStats getStatsByOrder(@Param("orderId") Long orderId);
+
+    @Query("""
+                SELECT
+                    p.code AS code,
+                    p.description AS name,
+                    COUNT(l) AS totalLogs,
+                    AVG(l.cycleTime) AS avgCycleTime,
+                    MIN(l.cycleTime) AS minCycleTime,
+                    MAX(l.cycleTime) AS maxCycleTime
+                FROM OrderLog l
+                JOIN l.order o
+                JOIN o.product p
+                WHERE p.id = :productId
+                GROUP BY p.code, p.description
+            """)
+    IProductStats getStatsByProduct(@Param("productId") Long productId);
 }
