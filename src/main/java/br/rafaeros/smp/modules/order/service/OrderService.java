@@ -134,9 +134,9 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public Page<OrderSummaryDTO> getSummary(Pageable pageable, String search) {
-        String searchTerm = (search != null && !search.isBlank())
-                ? "%" + search + "%"
+    public Page<OrderSummaryDTO> getSummary(Pageable pageable, String code) {
+        String searchTerm = (code != null && !code.isBlank())
+                ? "%" + code + "%"
                 : null;
         return orderRepository.findSummary(pageable, searchTerm);
     }

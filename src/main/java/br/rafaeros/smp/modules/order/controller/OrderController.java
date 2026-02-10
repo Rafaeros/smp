@@ -55,9 +55,9 @@ public class OrderController {
     @GetMapping("/summary")
     public ResponseEntity<ApiResponse<Page<OrderSummaryDTO>>> getSummary(
             @PageableDefault(page = 0, size = 20) Pageable pageable,
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String code) {
         return ResponseEntity
-                .ok(ApiResponse.success("Ordens listadas com sucesso", orderService.getSummary(pageable, search)));
+                .ok(ApiResponse.success("Ordens listadas com sucesso", orderService.getSummary(pageable, code)));
     }
 
     @GetMapping("/{id}")
