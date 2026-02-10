@@ -82,6 +82,11 @@ public class DeviceService {
         return DeviceDetailsResponseDTO.fromEntity(device);
     }
 
+    public Device findByIdInternal(Long id) {
+        return deviceRepository.findById(Objects.requireNonNull(id))
+                .orElseThrow(() -> new ResourceNotFoundException("Dispositivo nao encontrado"));
+    }
+
     @Transactional(readOnly = true)
     public DeviceDetailsResponseDTO findByMacAddress(String macAddress) {
         Device device = deviceRepository.findByMacAddress(macAddress)

@@ -210,14 +210,14 @@ public class OrderService {
         orderRepository.deleteById(Objects.requireNonNull(id));
     }
 
-    // Private Methods
     @Transactional(readOnly = true)
-    private Order findByIdInternal(Long id) {
+    public Order findByIdInternal(Long id) {
         Long safeId = Objects.requireNonNull(id);
         return orderRepository.findById(safeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Ordem não encontrada com o ID: " + id));
+        .orElseThrow(() -> new ResourceNotFoundException("Ordem não encontrada com o ID: " + id));
     }
-
+    
+    // Private Methods
     @Transactional(readOnly = true)
     private Order findByCodeInternal(String code) {
         String safeCode = Objects.requireNonNull(code);

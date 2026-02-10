@@ -1,4 +1,4 @@
-package br.rafaeros.smp.modules.orderlog.model;
+package br.rafaeros.smp.modules.log.model;
 
 import java.time.Instant;
 
@@ -26,7 +26,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderLog {
+public class Log {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

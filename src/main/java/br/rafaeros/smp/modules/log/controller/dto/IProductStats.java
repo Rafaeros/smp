@@ -1,8 +1,8 @@
-package br.rafaeros.smp.modules.orderlog.controller.dto;
+package br.rafaeros.smp.modules.log.controller.dto;
 
 public interface IProductStats {
     String getCode();
-    String getName();
+    String getDescription();
     
     Long getTotalLogs();
     Double getAvgCycleTime();

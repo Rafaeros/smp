@@ -20,10 +20,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
         @Query("SELECT o FROM Order o " +
                         "LEFT JOIN o.product p " +
-                        "LEFT JOIN o.client c " + 
+                        "LEFT JOIN o.client c " +
                         "WHERE " +
                         "(:code IS NULL OR LOWER(CAST(o.code AS string)) LIKE LOWER(CAST(:code AS string))) AND " +
-                        "(:productCode IS NULL OR LOWER(CAST(p.code AS string)) LIKE LOWER(CAST(:productCode AS string))) AND " +
+                        "(:productCode IS NULL OR LOWER(CAST(p.code AS string)) LIKE LOWER(CAST(:productCode AS string))) AND "
+                        +
                         "(:clientId IS NULL OR o.client.id = :clientId) AND " +
                         "(:status IS NULL OR o.status = :status) AND " +
                         "(o.deliveryDate >= :startDate) AND " +
@@ -38,12 +39,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         @Param("endDate") Instant endDate);
 
         @Query("""
-                SELECT new br.rafaeros.smp.modules.order.controller.dto.OrderSummaryDTO(
-                        o.id, 
-                        o.code
-                ) 
-                FROM Order o 
-                WHERE (:search IS NULL OR LOWER(CAST(o.code AS string)) LIKE LOWER(CAST(:search AS string))) 
-        """)
+                                SELECT new br.rafaeros.smp.modules.order.controller.dto.OrderSummaryDTO(
+                                        o.id,
+                                        o.code
+                                )
+                                FROM Order o
+                                WHERE (:search IS NULL OR LOWER(CAST(o.code AS string)) LIKE LOWER(CAST(:search AS string)))
+                        """)
         Page<OrderSummaryDTO> findSummary(Pageable pageable, @Param("search") String search);
 }

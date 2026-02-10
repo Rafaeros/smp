@@ -1,4 +1,4 @@
-package br.rafaeros.smp.modules.orderlog.controller.dto;
+package br.rafaeros.smp.modules.log.controller.dto;
 
 public record OrderStatsDTO (
     Long totalLogs,

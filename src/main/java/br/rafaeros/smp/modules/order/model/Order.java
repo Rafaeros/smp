@@ -8,8 +8,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import br.rafaeros.smp.core.model.BaseEntity;
 import br.rafaeros.smp.modules.client.model.Client;
 import br.rafaeros.smp.modules.device.model.Device;
+import br.rafaeros.smp.modules.log.model.Log;
 import br.rafaeros.smp.modules.order.model.enums.OrderStatus;
-import br.rafaeros.smp.modules.orderlog.model.OrderLog;
 import br.rafaeros.smp.modules.product.model.Product;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -66,5 +66,5 @@ public class Order extends BaseEntity {
 
     @JsonIgnore
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
-    private List<OrderLog> orderLog;
+    private List<Log> logs;
 }
