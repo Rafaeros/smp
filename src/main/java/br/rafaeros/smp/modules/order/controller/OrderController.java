@@ -36,6 +36,7 @@ public class OrderController {
     @PostMapping("/sync")
     public ResponseEntity<ApiResponse<List<OrderResponseDTO>>> syncOrders(ErpSearchFilter filter,
             @RequestParam(defaultValue = "false") boolean force) {
+        System.out.println("Filtro recebiodo: " + filter);
         return ResponseEntity
                 .ok(ApiResponse.success("Ordens sincronizadas com sucesso!", orderService.syncFromErp(filter, force)));
     }

@@ -43,6 +43,14 @@ public class OrderService {
 
     @Transactional
     public List<OrderResponseDTO> syncFromErp(ErpSearchFilter filter, boolean force) {
+
+        if (filter.getCode() != null && !filter.getCode().isBlank()) {
+            Optional<Order> exists = orderRepository.findByCode(filter.getCode());
+            if (exists.isPresent()) {
+                throw new BusinessException("Ja existe uma OP com o codigo: " + filter.getCode());
+            }
+        }
+
         List<OrderScrapeDTO> dtos = scrapeService.fetchOrders(filter);
         if (dtos.isEmpty()) {
             throw new ResourceNotFoundException("Nenhuma ordem encontrada no CG com esse filtro.");

@@ -1,6 +1,7 @@
 package br.rafaeros.smp.modules.order.scraper;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.Map;
 
@@ -30,7 +31,7 @@ public class ErpClient {
             return Jsoup.connect(searchUrl)
                     .cookies(cookies)
                     .userAgent("Mozilla/5.0")
-                    .timeout(120000)
+                    .timeout(180000)
                     .maxBodySize(0)
                     .ignoreContentType(true)
                     .data("OrdemProducao[codigo]", safeStr(filter.getCode()))
@@ -48,6 +49,9 @@ public class ErpClient {
                     .method(Connection.Method.GET)
                     .get();
 
+        } catch (SocketTimeoutException | java.net.http.HttpTimeoutException e) {
+            log.error("Timeout ao buscar no ERP: {}", e.getMessage());
+            throw new RuntimeException("O ERP demorou muito para responder. Tente novamente mais tarde.");
         } catch (IOException e) {
             log.error("Erro na busca. Tentando renovar sessão...", e);
             this.cookies = null;
@@ -62,10 +66,13 @@ public class ErpClient {
     }
 
     private void authenticate() throws IOException {
-        if (cookies != null && dynamicBaseUrl != null) return;
+        if (cookies != null && dynamicBaseUrl != null)
+            return;
         Connection.Response loginPageResponse = Jsoup.connect(properties.getUrl())
-                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+                .userAgent(
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                .header("Accept",
+                        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
                 .followRedirects(true)
                 .method(Connection.Method.GET)
                 .execute();
@@ -84,12 +91,13 @@ public class ErpClient {
                 codigoConexao = java.net.URLDecoder.decode(codigoConexao, java.nio.charset.StandardCharsets.UTF_8);
             }
         }
-        
-        if (csrfToken == null) csrfToken = "";
 
+        if (csrfToken == null)
+            csrfToken = "";
 
         Connection.Response authResponse = Jsoup.connect(loginUrlString)
-                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                .userAgent(
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                 .cookies(loginPageResponse.cookies())
                 .header("Origin", this.dynamicBaseUrl)
                 .header("Referer", loginUrlString)
@@ -106,7 +114,7 @@ public class ErpClient {
         if (authResponse.body().contains("Senha incorreta") || authResponse.body().contains("Incorrect username")) {
             throw new IOException("Credenciais inválidas.");
         }
-        
+
         if (authResponse.url().toString().contains("/login") && !authResponse.body().contains("dashboard")) {
             throw new IOException("Credenciais inválidas.");
         }
