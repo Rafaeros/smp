@@ -1,15 +1,14 @@
 package br.rafaeros.smp.modules.order.service;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,6 +88,29 @@ public class OrderService {
     public Page<OrderResponseDTO> findAll(Pageable pageable, OrderSearchFilter filter) {
         Pageable safePage = Objects.requireNonNull(pageable);
 
+        // --- CORREÇÃO DO TYPE SAFETY ---
+        // 1. Extraímos para uma variável explícita List<Sort.Order>
+        // 2. Usamos .collect(Collectors.toList()) que é mais amigável com inferência de
+        // tipos que .toList()
+        List<Sort.Order> sortOrders = safePage.getSort().stream()
+                .map(order -> {
+                    if (order.getProperty().equals("clientName")) {
+                        return new Sort.Order(order.getDirection(), "client.name");
+                    }
+                    if (order.getProperty().equals("productCode")) {
+                        return new Sort.Order(order.getDirection(), "product.code");
+                    }
+                    return order;
+                })
+                .collect(java.util.stream.Collectors.toList());
+
+        Sort newSort = Sort.by(sortOrders);
+
+        Pageable sortedPageable = PageRequest.of(
+                safePage.getPageNumber(),
+                safePage.getPageSize(),
+                newSort);
+
         String codeFilter = (filter.getCode() != null && !filter.getCode().isBlank())
                 ? "%" + filter.getCode() + "%"
                 : null;
@@ -102,7 +124,6 @@ public class OrderService {
             try {
                 clientIdFilter = Long.parseLong(filter.getClientId());
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Id inválido", e);
             }
         }
 
@@ -112,27 +133,25 @@ public class OrderService {
             try {
                 statusFilter = OrderStatus.valueOf(filter.getStatus());
             } catch (IllegalArgumentException e) {
-                throw new BusinessException("Status inválido");
             }
         }
+
         Instant startDate = Instant.parse("1970-01-01T00:00:00Z");
         Instant endDate = Instant.parse("2100-01-01T23:59:59Z");
 
         try {
             if (filter.getStartDeliveryDate() != null && !filter.getStartDeliveryDate().isBlank()) {
-                startDate = LocalDate.parse(filter.getStartDeliveryDate())
-                        .atStartOfDay(ZoneId.of("America/Sao_Paulo")).toInstant();
+                startDate = DateUtils.parseBRDate(filter.getStartDeliveryDate());
             }
             if (filter.getEndDeliveryDate() != null && !filter.getEndDeliveryDate().isBlank()) {
-                endDate = LocalDate.parse(filter.getEndDeliveryDate())
-                        .atTime(23, 59, 59).atZone(ZoneId.of("America/Sao_Paulo")).toInstant();
+                endDate = DateUtils.parseBRDate(filter.getEndDeliveryDate());
             }
-        } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Data inválida. Use o formato dd/MM/yyyy", e);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Formato de data inválido. Use dd/MM/yyyy");
         }
 
         return orderRepository.findAllWithFilter(
-                safePage,
+                sortedPageable,
                 codeFilter,
                 productCodeFilter,
                 clientIdFilter,

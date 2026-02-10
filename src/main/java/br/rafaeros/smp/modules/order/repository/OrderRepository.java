@@ -20,6 +20,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
         @Query("SELECT o FROM Order o " +
                         "LEFT JOIN o.product p " +
+                        "LEFT JOIN o.client c " + 
                         "WHERE " +
                         "(:code IS NULL OR LOWER(CAST(o.code AS string)) LIKE LOWER(CAST(:code AS string))) AND " +
                         "(:productCode IS NULL OR LOWER(CAST(p.code AS string)) LIKE LOWER(CAST(:productCode AS string))) AND " +
