@@ -8,10 +8,6 @@ public record DeviceBindingDTO(
 
         @NotBlank(message = "O nome deve ser informado") String name,
 
-        @NotBlank(message = "O MAC Address deve ser informado") String macAddress,
-
-        @NotBlank(message = "O IP Address deve ser informado") String ipAddress,
-
         @NotNull(message = "A coordenada X deve ser informada") Double coordinateX,
 
         @NotNull(message = "A coordenada Y deve ser informada") Double coordinateY) {

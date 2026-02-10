@@ -56,6 +56,7 @@ public class UserDeviceService {
         userDevice.setName(dto.name());
         userDevice.setCoordinateX(dto.coordinateX());
         userDevice.setCoordinateY(dto.coordinateY());
+        userDevice.getDevice().setCurrentOrder(null);
 
         UserDevice saved = userDeviceRepository.save(userDevice);
         return UserDeviceDetailsDTO.fromEntity(saved);

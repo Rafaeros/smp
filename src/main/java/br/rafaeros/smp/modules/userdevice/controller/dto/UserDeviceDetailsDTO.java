@@ -28,7 +28,7 @@ public record UserDeviceDetailsDTO(
                 userDevice.getDevice().getStatus(),
                 userDevice.getDevice().getProcessStatus(),
                 userDevice.getDevice().getCurrentStage(),
-                userDevice.getDevice().getCurrentOrder().getCode(),
+                (userDevice.getDevice().getCurrentOrder() != null) ? userDevice.getDevice().getCurrentOrder().getCode() : "",
                 userDevice.getDevice().getLastSeen().toString(),
                 userDevice.getCoordinateX(),
                 userDevice.getCoordinateY(),
