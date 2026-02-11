@@ -125,37 +125,38 @@ public class UserDeviceService {
         return UserDeviceDetailsDTO.fromEntity(userDevice);
     }
 
-    @Transactional
+ @Transactional
     public UserDeviceDetailsDTO updateDeviceDetails(Long userDeviceId, User user, UpdateDeviceDetailsDTO dto) {
         
         UserDevice userDevice;
         if (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER) {
             userDevice = userDeviceRepository.findById(Objects.requireNonNull(userDeviceId))
                     .orElseThrow(() -> new ResourceNotFoundException("Dispositivo não encontrado"));
-        } 
-        else {
+        } else {
             userDevice = userDeviceRepository.findByIdAndUserId(userDeviceId, user.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Dispositivo não encontrado ou acesso negado"));
         }
-
         if (userDevice.getDevice() == null) {
             throw new ResourceNotFoundException("Dispositivo físico associado não encontrado");
         }
-
         if (dto.name() != null && !dto.name().isBlank()) {
             userDevice.setName(dto.name());
         }
-        
         if (dto.processStage() != null) {
             userDevice.getDevice().setCurrentStage(dto.processStage());
         }
-
         if (dto.orderId() != null) {
             Long safeId = Objects.requireNonNull(dto.orderId());
             Order order = orderRepository.findById(safeId)
                     .orElseThrow(() -> new ResourceNotFoundException("Ordem de Produção não encontrada"));
 
             userDevice.getDevice().setCurrentOrder(order);
+        }
+        if (dto.coordinateX() != null) {
+            userDevice.setCoordinateX(dto.coordinateX());
+        }
+        if (dto.coordinateY() != null) {
+            userDevice.setCoordinateY(dto.coordinateY());
         }
 
         UserDevice updated = userDeviceRepository.save(userDevice);
