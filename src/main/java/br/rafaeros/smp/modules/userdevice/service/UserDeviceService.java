@@ -3,8 +3,8 @@ package br.rafaeros.smp.modules.userdevice.service;
 import java.util.List;
 import java.util.Objects;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,64 +63,80 @@ public class UserDeviceService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserDeviceMapResponseDTO> getMyMap(User user) {
+    public Page<UserDeviceMapResponseDTO> getMyDevices(
+            User user,
+            String name,
+            String macAddress,
+            String status,
+            Pageable pageable) {
 
-        Long userId = user.getId();
-
-        if (user.getRole() == Role.ADMIN) {
-            return userDeviceRepository.findAll()
-                    .stream()
-                    .map(UserDeviceMapResponseDTO::fromEntity)
-                    .toList();
+        DeviceStatus deviceStatus = null;
+        if (status != null && !status.isBlank()) {
+            try {
+                deviceStatus = DeviceStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Status inválido: " + status);
+            }
         }
-        return userDeviceRepository.findByUserId(userId)
-                .stream()
-                .map(UserDeviceMapResponseDTO::fromEntity)
-                .toList();
-    }
 
-    @Transactional(readOnly = true)
-    public List<UserDeviceMapResponseDTO> getMyDevices(Pageable pageable, Long userId, String name, String macAddress,
-            String status) {
-        Sort sort = pageable != null ? pageable.getSort() : Sort.by("name");
-        String nameFilter = (name != null && !name.isBlank()) ? "%" + name + "%" : null;
-        String macAddressFilter = (macAddress != null && !macAddress.isBlank()) ? "%" + macAddress + "%" : null;
-        DeviceStatus deviceStatus = (status != null && !status.isBlank()) ? DeviceStatus.valueOf(status.toUpperCase())
-                : null;
-
-        boolean hasFilter = nameFilter != null || macAddressFilter != null || deviceStatus != null;
-
-        List<UserDevice> devices;
-
-        if (hasFilter) {
-            devices = userDeviceRepository.findByUserIdWithFilter(
-                    userId,
-                    nameFilter,
-                    macAddressFilter,
+        Page<UserDevice> devicesPage;
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER) {
+            devicesPage = userDeviceRepository.findAllWithFilters(
+                    name,
+                    macAddress,
                     deviceStatus,
-                    sort);
+                    pageable);
         } else {
-            devices = userDeviceRepository.findByUserId(userId);
+            devicesPage = userDeviceRepository.findByUserIdAndFilters(
+                    user.getId(),
+                    name,
+                    macAddress,
+                    deviceStatus,
+                    pageable);
         }
+        return devicesPage.map(UserDeviceMapResponseDTO::fromEntity);
+    }
 
-        return devices.stream()
+    @Transactional(readOnly = true)
+    public List<UserDeviceMapResponseDTO> getMyMap(User user) {
+        List<UserDevice> devicesList;
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER) {
+            devicesList = userDeviceRepository.findAllForMap();
+        } else {
+            devicesList = userDeviceRepository.findAllByUserIdForMap(user.getId());
+        }
+        return devicesList.stream()
                 .map(UserDeviceMapResponseDTO::fromEntity)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public UserDeviceDetailsDTO findById(Long id, Long userId) {
-        UserDevice userDevice = userDeviceRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Dispositivo do usuário não encontrado"));
+    public UserDeviceDetailsDTO findById(Long id, User user) {
+        Long safeId = Objects.requireNonNull(id);
+        UserDevice userDevice;
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER) {
+            userDevice = userDeviceRepository.findById(safeId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Dispositivo não encontrado"));
+        } else {
+            userDevice = userDeviceRepository.findByIdAndUserId(id, user.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Dispositivo não encontrado ou acesso negado"));
+        }
 
         return UserDeviceDetailsDTO.fromEntity(userDevice);
     }
 
     @Transactional
-    // Note que removemos o ID do DTO, usamos apenas o userDeviceId que vem da URL
-    public UserDeviceDetailsDTO updateDeviceDetails(Long userDeviceId, Long userId, UpdateDeviceDetailsDTO dto) {
-        UserDevice userDevice = userDeviceRepository.findByIdAndUserId(userDeviceId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Dispositivo do usuário não encontrado"));
+    public UserDeviceDetailsDTO updateDeviceDetails(Long userDeviceId, User user, UpdateDeviceDetailsDTO dto) {
+        
+        UserDevice userDevice;
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER) {
+            userDevice = userDeviceRepository.findById(Objects.requireNonNull(userDeviceId))
+                    .orElseThrow(() -> new ResourceNotFoundException("Dispositivo não encontrado"));
+        } 
+        else {
+            userDevice = userDeviceRepository.findByIdAndUserId(userDeviceId, user.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Dispositivo não encontrado ou acesso negado"));
+        }
 
         if (userDevice.getDevice() == null) {
             throw new ResourceNotFoundException("Dispositivo físico associado não encontrado");
@@ -129,6 +145,7 @@ public class UserDeviceService {
         if (dto.name() != null && !dto.name().isBlank()) {
             userDevice.setName(dto.name());
         }
+        
         if (dto.processStage() != null) {
             userDevice.getDevice().setCurrentStage(dto.processStage());
         }

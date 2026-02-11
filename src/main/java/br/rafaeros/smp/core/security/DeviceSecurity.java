@@ -13,15 +13,14 @@ public class DeviceSecurity {
     @Autowired
     private UserDeviceRepository userDeviceRepository;
 
-    public boolean canAccess(Long deviceId, User user) {
-        if (user == null) return true;
+    public boolean canAccess(Long userDeviceId, User user) {
+        if (user == null) return false;
 
         boolean isAdminOrManager = user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER;
 
         if (isAdminOrManager) {
             return true;
         }
-
-        return userDeviceRepository.existsByUserIdAndDeviceId(user.getId(), deviceId);
+        return userDeviceRepository.existsByIdAndUserId(userDeviceId, user.getId());
     }
 }

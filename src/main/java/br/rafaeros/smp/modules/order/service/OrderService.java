@@ -87,11 +87,6 @@ public class OrderService {
     @Transactional(readOnly = true)
     public Page<OrderResponseDTO> findAll(Pageable pageable, OrderSearchFilter filter) {
         Pageable safePage = Objects.requireNonNull(pageable);
-
-        // --- CORREÇÃO DO TYPE SAFETY ---
-        // 1. Extraímos para uma variável explícita List<Sort.Order>
-        // 2. Usamos .collect(Collectors.toList()) que é mais amigável com inferência de
-        // tipos que .toList()
         List<Sort.Order> sortOrders = safePage.getSort().stream()
                 .map(order -> {
                     if (order.getProperty().equals("clientName")) {
@@ -104,7 +99,7 @@ public class OrderService {
                 })
                 .collect(java.util.stream.Collectors.toList());
 
-        Sort newSort = Sort.by(sortOrders);
+        Sort newSort = Sort.by(Objects.requireNonNull(sortOrders));
 
         Pageable sortedPageable = PageRequest.of(
                 safePage.getPageNumber(),

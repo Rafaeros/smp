@@ -2,6 +2,7 @@ package br.rafaeros.smp.modules.userdevice.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -43,27 +44,38 @@ public class UserDeviceController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<UserDeviceMapResponseDTO>>> getMyDevices(
-            @PageableDefault(page = 0, size = 10) Pageable pageable, @AuthenticationPrincipal User user,
-            @RequestParam(required = false) String name, @RequestParam(required = false) String macAddress,
+    public ResponseEntity<ApiResponse<Page<UserDeviceMapResponseDTO>>> getMyDevices(
+            @PageableDefault(page = 0, size = 10, sort = "name") Pageable pageable,
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String macAddress,
             @RequestParam(required = false) String status) {
-        return ResponseEntity.ok(ApiResponse.success("Dispositivos Listados com sucesso!",
-                userDeviceService.getMyDevices(pageable, user.getId(), name, macAddress, status)));
+
+        Page<UserDeviceMapResponseDTO> pageResult = userDeviceService.getMyDevices(
+                user,
+                name,
+                macAddress,
+                status,
+                pageable);
+
+        return ResponseEntity.ok(ApiResponse.success("Dispositivos listados com sucesso!", pageResult));
     }
 
     @GetMapping("/map")
-    public ResponseEntity<ApiResponse<List<UserDeviceMapResponseDTO>>> getMyMap(@AuthenticationPrincipal User user) {
-        return ResponseEntity
-                .ok(ApiResponse.success("Mapa de dispositivos carregado com sucesso!",
-                        userDeviceService.getMyMap(user)));
+    public ResponseEntity<ApiResponse<List<UserDeviceMapResponseDTO>>> getMyMap(
+            @AuthenticationPrincipal User user) {
+
+        List<UserDeviceMapResponseDTO> listResult = userDeviceService.getMyMap(user);
+
+        return ResponseEntity.ok(ApiResponse.success("Mapa de dispositivos carregado com sucesso!", listResult));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("@deviceSecurity.canAccess(#id, principal)")
-    public ResponseEntity<ApiResponse<UserDeviceDetailsDTO>> getDetails(@PathVariable Long id,
+    public ResponseEntity<ApiResponse<UserDeviceDetailsDTO>> getDeviceDetails(@PathVariable Long id,
             @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(
-                ApiResponse.success("Dispositivo Listado com sucesso!", userDeviceService.findById(id, user.getId())));
+                ApiResponse.success("Dispositivo Listado com sucesso!", userDeviceService.findById(id, user)));
     }
 
 @PatchMapping("/{id}")
@@ -72,9 +84,7 @@ public class UserDeviceController {
             @PathVariable Long id,
             @RequestBody UpdateDeviceDetailsDTO dto,
             @AuthenticationPrincipal User user) {
-        
-        UserDeviceDetailsDTO userDevice = userDeviceService.updateDeviceDetails(id, user.getId(), dto);
-        
+        UserDeviceDetailsDTO userDevice = userDeviceService.updateDeviceDetails(id, user, dto);
         return ResponseEntity.ok(ApiResponse.success("Dispositivo atualizado com sucesso!", userDevice));
     }
 

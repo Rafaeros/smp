@@ -3,7 +3,8 @@ package br.rafaeros.smp.modules.userdevice.repository;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,28 +16,52 @@ import br.rafaeros.smp.modules.userdevice.model.UserDevice;
 @Repository
 public interface UserDeviceRepository extends JpaRepository<UserDevice, Long> {
 
-    @Query("SELECT ud FROM UserDevice ud JOIN FETCH ud.device WHERE ud.user.id = :userId")
-    List<UserDevice> findByUserId(@Param("userId") Long userId);
+        @Query(value = "SELECT ud FROM UserDevice ud JOIN FETCH ud.device d WHERE ud.user.id = :userId AND " +
+                        "(:name IS NULL OR LOWER(ud.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
+                        "(:macAddress IS NULL OR LOWER(d.macAddress) LIKE LOWER(CONCAT('%', :macAddress, '%'))) AND " +
+                        "(:status IS NULL OR d.status = :status)", countQuery = "SELECT count(ud) FROM UserDevice ud JOIN ud.device d WHERE ud.user.id = :userId AND "
+                                        +
+                                        "(:name IS NULL OR LOWER(ud.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
+                                        "(:macAddress IS NULL OR LOWER(d.macAddress) LIKE LOWER(CONCAT('%', :macAddress, '%'))) AND "
+                                        +
+                                        "(:status IS NULL OR d.status = :status)")
+        Page<UserDevice> findByUserIdAndFilters(
+                        @Param("userId") Long userId,
+                        @Param("name") String name,
+                        @Param("macAddress") String macAddress,
+                        @Param("status") DeviceStatus status,
+                        Pageable pageable);
 
-    @Query("SELECT ud FROM UserDevice ud JOIN FETCH ud.device WHERE ud.user.id = :userId AND " +
-            "(:name IS NULL OR LOWER(CAST(ud.name AS string)) LIKE LOWER(CAST(:name AS string))) AND " +
-            "(:macAddress IS NULL OR LOWER(CAST(ud.device.macAddress AS string)) LIKE LOWER(CAST(:macAddress AS string))) AND "
-            +
-            "(:status IS NULL OR ud.device.status = :status)")
-    List<UserDevice> findByUserIdWithFilter(
-            @Param("userId") Long userId,
-            @Param("name") String name,
-            @Param("macAddress") String macAddress,
-            @Param("status") DeviceStatus status,
-            Sort sort);
+        @Query(value = "SELECT ud FROM UserDevice ud JOIN FETCH ud.device d WHERE " +
+                        "(:name IS NULL OR LOWER(ud.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
+                        "(:macAddress IS NULL OR LOWER(d.macAddress) LIKE LOWER(CONCAT('%', :macAddress, '%'))) AND " +
+                        "(:status IS NULL OR d.status = :status)", countQuery = "SELECT count(ud) FROM UserDevice ud JOIN ud.device d WHERE "
+                                        +
+                                        "(:name IS NULL OR LOWER(ud.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
+                                        "(:macAddress IS NULL OR LOWER(d.macAddress) LIKE LOWER(CONCAT('%', :macAddress, '%'))) AND "
+                                        +
+                                        "(:status IS NULL OR d.status = :status)")
+        Page<UserDevice> findAllWithFilters(
+                        @Param("name") String name,
+                        @Param("macAddress") String macAddress,
+                        @Param("status") DeviceStatus status,
+                        Pageable pageable);
 
-    boolean existsByDeviceId(Long deviceId);
+        @Query("SELECT ud FROM UserDevice ud JOIN FETCH ud.device WHERE ud.user.id = :userId")
+        List<UserDevice> findAllByUserIdForMap(@Param("userId") Long userId);
 
-    boolean existsByUserIdAndDeviceId(Long userId, Long deviceId);
+        @Query("SELECT ud FROM UserDevice ud JOIN FETCH ud.device")
+        List<UserDevice> findAllForMap();
 
-    boolean existsByUserIdAndDeviceMacAddress(Long userId, String macAddress);
+        boolean existsByIdAndUserId(Long id, Long userId);
+        
+        boolean existsByDeviceId(Long deviceId);
 
-    Optional<UserDevice> findByIdAndUserId(Long id, Long userId);
+        boolean existsByUserIdAndDeviceId(Long userId, Long deviceId);
 
-    Optional<UserDevice> findByUserIdAndDeviceId(Long userId, Long deviceId);
+        boolean existsByUserIdAndDeviceMacAddress(Long userId, String macAddress);
+
+        Optional<UserDevice> findByIdAndUserId(Long id, Long userId);
+
+        Optional<UserDevice> findByUserIdAndDeviceId(Long userId, Long deviceId);
 }
