@@ -38,6 +38,7 @@ public class LogService {
 
         Log log = new Log();
         log.setQuantityProduced(request.quantityProduced());
+        log.setQuantityPaused(request.quantityPaused());
         log.setCycleTime(request.cycleTime());
         log.setPausedTime(request.pausedTime());
         log.setOrder(orderService.findByIdInternal(request.orderId()));
@@ -45,7 +46,7 @@ public class LogService {
 
         Log saved = repository.save(log);
         return LogResponseDTO.fromEntity(saved);
-    }
+    }   
 
     // --- FEATURE: List ---
 

@@ -37,6 +37,7 @@ public class Log {
     private Instant createdAt;
 
     private Long quantityProduced;
+    private Long quantityPaused;
 
     private Double cycleTime;
     private Double pausedTime;

@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 public record CreateLogRequestDTO(
         @NotNull(message = "A quantidade produzida deve ser informada") Long quantityProduced,
 
+        @NotNull(message = "A quantidade de pausas deve ser informada") Long quantityPaused,
+
         @NotNull(message = "O tempo de ciclo deve ser informado") Double cycleTime,
 
         @NotNull(message = "O tempo de pausa deve ser informado") Double pausedTime,

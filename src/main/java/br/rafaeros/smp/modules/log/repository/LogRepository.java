@@ -21,10 +21,11 @@ public interface LogRepository extends JpaRepository<Log, Long> {
     @Query("""
                 SELECT
                     COUNT(l) AS totalLogs,
-                    AVG(l.cycleTime) AS avgCycleTime,
-                    MIN(l.cycleTime) AS minCycleTime,
-                    MAX(l.cycleTime) AS maxCycleTime,
-                    SUM(l.quantityProduced) AS quantityProduced
+                    AVG(l.cycleTime + COALESCE(l.pausedTime, 0)) AS avgCycleTime,
+                    MIN(l.cycleTime + COALESCE(l.pausedTime, 0)) AS minCycleTime,
+                    MAX(l.cycleTime + COALESCE(l.pausedTime, 0)) AS maxCycleTime,
+                    SUM(l.quantityProduced) AS quantityProduced,
+                    SUM(COALESCE(l.quantityPaused, 0)) AS totalPauses
                 FROM Log l
                 WHERE l.order.id = :orderId
             """)
@@ -35,9 +36,9 @@ public interface LogRepository extends JpaRepository<Log, Long> {
             p.code,
             p.description,
             COUNT(l),
-            AVG(l.cycleTime),
-            MIN(l.cycleTime),
-            MAX(l.cycleTime)
+            AVG(l.cycleTime + COALESCE(l.pausedTime, 0)),
+            MIN(l.cycleTime + COALESCE(l.pausedTime, 0)),
+            MAX(l.cycleTime + COALESCE(l.pausedTime, 0))
         )
         FROM Product p
         LEFT JOIN Order o ON o.product = p
