@@ -91,7 +91,7 @@ public class UserDeviceController {
     @DeleteMapping("/{id}")
     @PreAuthorize("@deviceSecurity.canAccess(#id, principal)")
     public ResponseEntity<ApiResponse<Void>> deleteDevice(@PathVariable Long id, @AuthenticationPrincipal User user) {
-        userDeviceService.unbindDevice(id, user.getId());
+        userDeviceService.unbindDevice(id, user);
         return ResponseEntity.ok(ApiResponse.success("Dispositivo removido com sucesso!"));
     }
 

@@ -125,9 +125,9 @@ public class UserDeviceService {
         return UserDeviceDetailsDTO.fromEntity(userDevice);
     }
 
- @Transactional
+    @Transactional
     public UserDeviceDetailsDTO updateDeviceDetails(Long userDeviceId, User user, UpdateDeviceDetailsDTO dto) {
-        
+
         UserDevice userDevice;
         if (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER) {
             userDevice = userDeviceRepository.findById(Objects.requireNonNull(userDeviceId))
@@ -164,8 +164,18 @@ public class UserDeviceService {
     }
 
     @Transactional
-    public void unbindDevice(Long userDeviceId, Long userId) {
-        UserDevice userDevice = userDeviceRepository.findByIdAndUserId(userDeviceId, userId)
+    public void unbindDevice(Long userDeviceId, User user) {
+
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER) {
+            if (!userDeviceRepository.existsById(Objects.requireNonNull(userDeviceId))) {
+                throw new ResourceNotFoundException("Dispositivo do usuário nao encontrado");
+            }
+
+            userDeviceRepository.deleteById(Objects.requireNonNull(userDeviceId));
+            return;
+        }
+
+        UserDevice userDevice = userDeviceRepository.findByIdAndUserId(userDeviceId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Dispositivo do usuário não encontrado"));
 
         if (userDevice.getDevice() == null) {
