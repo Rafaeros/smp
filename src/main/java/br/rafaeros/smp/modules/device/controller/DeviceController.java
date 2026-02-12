@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -20,6 +21,7 @@ import br.rafaeros.smp.modules.device.controller.dto.DeviceDetailsResponseDTO;
 import br.rafaeros.smp.modules.device.controller.dto.DeviceResponseDTO;
 import br.rafaeros.smp.modules.device.controller.dto.UpdateDeviceDTO;
 import br.rafaeros.smp.modules.device.service.DeviceService;
+import br.rafaeros.smp.modules.user.model.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -50,33 +52,18 @@ public class DeviceController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@deviceSecurity.canAccess(#id, authentication)")
-    public ResponseEntity<ApiResponse<DeviceDetailsResponseDTO>> getDeviceById(@PathVariable Long id) {
+    @PreAuthorize("@deviceSecurity.canAccess(#id, principal)")
+    public ResponseEntity<ApiResponse<DeviceDetailsResponseDTO>> getDeviceById(@PathVariable Long id,
+            @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(ApiResponse.success("Dispositivo encontrado.", deviceService.findById(id)));
     }
 
-    @GetMapping("/mac/{macAddress}")
-    @PreAuthorize("@deviceSecurity.canAccessByMac(#macAddress, authentication)")
-    public ResponseEntity<ApiResponse<DeviceDetailsResponseDTO>> getDeviceByMacAddress(
-            @PathVariable String macAddress) {
-        return ResponseEntity
-                .ok(ApiResponse.success("Dispositivo encontrado.", deviceService.findByMacAddress(macAddress)));
-    }
-
     @PatchMapping("/update/{id}")
-    @PreAuthorize("@deviceSecurity.canAccess(#id, authentication)")
+    @PreAuthorize("@deviceSecurity.canAccess(#id, principal)")
     public ResponseEntity<ApiResponse<DeviceResponseDTO>> updateDeviceById(@PathVariable Long id,
-            @RequestBody @Valid UpdateDeviceDTO dto) {
+            @RequestBody @Valid UpdateDeviceDTO dto, @AuthenticationPrincipal User user) {
         return ResponseEntity
                 .ok(ApiResponse.success("Dispositivo atualizado com sucesso!", deviceService.updateById(id, dto)));
-    }
-
-    @PatchMapping("/update/mac/{macAddress}")
-    @PreAuthorize("@deviceSecurity.canAccessByMac(#macAddress, authentication)")
-    public ResponseEntity<ApiResponse<DeviceResponseDTO>> updateDeviceByMacAddress(@PathVariable String macAddress,
-            @RequestBody @Valid UpdateDeviceDTO dto) {
-        return ResponseEntity.ok(ApiResponse.success("Dispositivo atualizado com sucesso!",
-                deviceService.updateByMacAddress(macAddress, dto)));
     }
 
     @DeleteMapping("/{id}")

@@ -12,6 +12,7 @@ public record DeviceDetailsResponseDTO (
     DeviceStatus status,
     ProcessStage stage,
     ProcessStatus process,
+    String currentOrder,
     String lastSeen
 ) {
     public static DeviceDetailsResponseDTO fromEntity(Device device) {
@@ -22,6 +23,7 @@ public record DeviceDetailsResponseDTO (
                 device.getStatus(),
                 device.getCurrentStage(),
                 device.getProcessStatus(),
+                (device.getCurrentOrder() != null) ? device.getCurrentOrder().getCode() : "",
                 device.getLastSeen().toString()
         );
     }
