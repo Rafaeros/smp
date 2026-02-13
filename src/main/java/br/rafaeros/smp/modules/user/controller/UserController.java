@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.rafaeros.smp.core.dto.ApiResponse;
 import br.rafaeros.smp.modules.user.controller.dto.CreateUserRequestDTO;
+import br.rafaeros.smp.modules.user.controller.dto.UpdatePasswordRequestDTO;
 import br.rafaeros.smp.modules.user.controller.dto.UpdateUserRequestDTO;
 import br.rafaeros.smp.modules.user.controller.dto.UserResponseDTO;
 import br.rafaeros.smp.modules.user.model.User;
@@ -59,6 +60,12 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponseDTO>> update(@PathVariable Long id,
             @RequestBody @Valid UpdateUserRequestDTO dto) {
         return ResponseEntity.ok(ApiResponse.success("Usuário atualizado com sucesso!", userService.update(id, dto)));
+    }
+
+    @PatchMapping("/{id}/change-password")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER') or #id == principal.id")
+    public ResponseEntity<ApiResponse<UserResponseDTO>> changePassword(@PathVariable Long id, @RequestBody @Valid UpdatePasswordRequestDTO dto, @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(ApiResponse.success("Senha atualizada com sucesso!", userService.changePassword(id, dto, user)));
     }
 
     @DeleteMapping("/{id}")

@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import br.rafaeros.smp.core.exception.BusinessException;
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
 import br.rafaeros.smp.modules.user.controller.dto.CreateUserRequestDTO;
+import br.rafaeros.smp.modules.user.controller.dto.UpdatePasswordRequestDTO;
 import br.rafaeros.smp.modules.user.controller.dto.UpdateUserRequestDTO;
 import br.rafaeros.smp.modules.user.controller.dto.UserResponseDTO;
 import br.rafaeros.smp.modules.user.model.User;
@@ -131,6 +132,25 @@ public class UserService implements UserDetailsService {
 
         User savedUser = userRepository.save(user);
         return UserResponseDTO.fromEntity(savedUser);
+    }
+
+    public UserResponseDTO changePassword(Long id, UpdatePasswordRequestDTO dto, User user) {
+        if (!passwordEncoder.matches(dto.currentPassword(), user.getPassword())) {
+            throw new BusinessException("Senha atual incorreta");
+        }
+
+        if (!dto.newPassword().equals(dto.confirmNewPassword())) {
+            throw new BusinessException("As senhas novas devem ser iguais");
+        }
+
+        if (!dto.newPassword().equals(dto.currentPassword())) {
+            user.setPassword(passwordEncoder.encode(dto.newPassword()));
+            User savedUser = userRepository.save(user);
+            return UserResponseDTO.fromEntity(savedUser);
+        } else {
+            throw new BusinessException("A nova senha deve ser diferente da senha atual");
+        }
+
     }
 
     private User findByIdInternal(Long id) {
