@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -19,6 +20,7 @@ import br.rafaeros.smp.core.dto.ApiResponse;
 import br.rafaeros.smp.modules.user.controller.dto.CreateUserRequestDTO;
 import br.rafaeros.smp.modules.user.controller.dto.UpdateUserRequestDTO;
 import br.rafaeros.smp.modules.user.controller.dto.UserResponseDTO;
+import br.rafaeros.smp.modules.user.model.User;
 import br.rafaeros.smp.modules.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,13 +33,13 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping()
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<UserResponseDTO>> createUser(@RequestBody @Valid CreateUserRequestDTO dto) {
         return ResponseEntity.ok(ApiResponse.success("Usuário criado com sucesso!", userService.createUser(dto)));
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<Page<UserResponseDTO>>> getAll(
             @PageableDefault(page = 0, size = 10) Pageable pageable, @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName, @RequestParam(required = false) String username,
@@ -47,20 +49,20 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<UserResponseDTO>> getUserById(@PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER') or #id == principal.id")
+    public ResponseEntity<ApiResponse<UserResponseDTO>> getUserById(@PathVariable Long id, @AuthenticationPrincipal User User) {
         return ResponseEntity.ok(ApiResponse.success("Usuário encontrado.", userService.findById(id)));
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<UserResponseDTO>> update(@PathVariable Long id,
             @RequestBody @Valid UpdateUserRequestDTO dto) {
         return ResponseEntity.ok(ApiResponse.success("Usuário atualizado com sucesso!", userService.update(id, dto)));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         userService.delete(id);
         return ResponseEntity.ok(ApiResponse.success("Usuário removido com sucesso!"));

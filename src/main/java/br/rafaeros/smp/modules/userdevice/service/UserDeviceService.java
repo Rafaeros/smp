@@ -112,13 +112,17 @@ public class UserDeviceService {
                 .toList();
     }
 
-    @Transactional(readOnly = true)
+@Transactional(readOnly = true)
     public Page<UserDeviceDetailsDTO> findAllByUserId(Long userId, User user, Pageable pageable) {
-        if (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER) {
+        boolean isAdminOrManager = user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER;
+        boolean isSelf = user.getId().equals(userId);
+
+        if (isAdminOrManager || isSelf) {
             return userDeviceRepository.findAllByUserId(userId, pageable)
                     .map(UserDeviceDetailsDTO::fromEntity);
         } else {
-            throw new BusinessException("Acesso negado");
+
+            throw new BusinessException("Acesso negado: Você não tem permissão para visualizar estes dispositivos.");
         }
     }
 
