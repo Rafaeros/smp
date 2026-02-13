@@ -9,6 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import br.rafaeros.smp.core.model.BaseEntity;
 import br.rafaeros.smp.modules.user.model.enums.Role;
+import br.rafaeros.smp.modules.userdevice.model.UserDevice;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,6 +18,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,6 +46,9 @@ public class User extends BaseEntity implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserDevice> devices;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
