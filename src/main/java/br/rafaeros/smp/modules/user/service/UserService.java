@@ -1,8 +1,8 @@
 package br.rafaeros.smp.modules.user.service;
 
+import java.util.List;
 import java.util.Objects;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,13 +21,16 @@ import br.rafaeros.smp.modules.user.controller.dto.UserResponseDTO;
 import br.rafaeros.smp.modules.user.model.User;
 import br.rafaeros.smp.modules.user.model.enums.Role;
 import br.rafaeros.smp.modules.user.repository.UserRepository;
+import br.rafaeros.smp.modules.userdevice.model.UserDevice;
+import br.rafaeros.smp.modules.userdevice.repository.UserDeviceRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class UserService implements UserDetailsService {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final UserDeviceRepository userDeviceRepository;
+    private final PasswordEncoder passwordEncoder;
     private final String DEFAULT_PASSWORD = "mudar@123";
 
     @Transactional
@@ -163,8 +166,10 @@ public class UserService implements UserDetailsService {
     public void delete(Long id) {
         User user = findByIdInternal(id);
 
-        if (user == null) {
-            throw new ResourceNotFoundException("Usuário não encontrado");
+        List<UserDevice> linkedDevices = userDeviceRepository.findAllDevicesListByUserId(user.getId());
+
+        if (!linkedDevices.isEmpty()) {
+            userDeviceRepository.deleteAll(linkedDevices);
         }
 
         userRepository.delete(user);

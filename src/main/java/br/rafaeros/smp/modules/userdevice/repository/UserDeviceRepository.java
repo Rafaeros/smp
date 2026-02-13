@@ -58,6 +58,8 @@ public interface UserDeviceRepository extends JpaRepository<UserDevice, Long> {
 
         Page<UserDevice> findAllByUserId(Long userId, Pageable pageable);
 
+        List<UserDevice> findAllDevicesListByUserId(Long userId);
+
         boolean existsByIdAndUserId(Long id, Long userId);
 
         boolean existsByDeviceId(Long deviceId);
