@@ -71,15 +71,26 @@ public class UserDeviceController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@deviceSecurity.canAccess(#id, principal)")
+    @PreAuthorize("@deviceSecurity.canAccessDevice(#id, principal)")
     public ResponseEntity<ApiResponse<UserDeviceDetailsDTO>> getDeviceDetails(@PathVariable Long id,
             @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(
                 ApiResponse.success("Dispositivo Listado com sucesso!", userDeviceService.findById(id, user)));
     }
 
-@PatchMapping("/{id}")
-    @PreAuthorize("@deviceSecurity.canAccess(#id, principal)")
+    @GetMapping("/{id}/devices")
+    @PreAuthorize("@deviceSecurity.canAccessUserDevices(#id, principal)")
+    public ResponseEntity<ApiResponse<Page<UserDeviceDetailsDTO>>> getAllDevicesByUserId(
+            @PathVariable Long id,
+            @PageableDefault(page = 0, size = 10, sort = "name") Pageable pageable,
+            @AuthenticationPrincipal User user) {
+
+        return ResponseEntity.ok(ApiResponse.success("Dispositivos listados com sucesso!",
+                userDeviceService.findAllByUserId(id, user, pageable)));
+    }
+
+    @PatchMapping("/{id}")
+    @PreAuthorize("@deviceSecurity.canAccessDevice(#id, principal)")
     public ResponseEntity<ApiResponse<UserDeviceDetailsDTO>> updateDeviceDetails(
             @PathVariable Long id,
             @RequestBody UpdateDeviceDetailsDTO dto,
@@ -89,7 +100,7 @@ public class UserDeviceController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@deviceSecurity.canAccess(#id, principal)")
+    @PreAuthorize("@deviceSecurity.canAccessDevice(#id, principal)")
     public ResponseEntity<ApiResponse<Void>> deleteDevice(@PathVariable Long id, @AuthenticationPrincipal User user) {
         userDeviceService.unbindDevice(id, user);
         return ResponseEntity.ok(ApiResponse.success("Dispositivo removido com sucesso!"));

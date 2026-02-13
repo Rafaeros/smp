@@ -52,14 +52,14 @@ public class DeviceController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@deviceSecurity.canAccess(#id, principal)")
+    @PreAuthorize("@deviceSecurity.canAccessDevice(#id, principal)")
     public ResponseEntity<ApiResponse<DeviceDetailsResponseDTO>> getDeviceById(@PathVariable Long id,
             @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(ApiResponse.success("Dispositivo encontrado.", deviceService.findById(id)));
     }
 
     @PatchMapping("/update/{id}")
-    @PreAuthorize("@deviceSecurity.canAccess(#id, principal)")
+    @PreAuthorize("@deviceSecurity.canAccessDevice(#id, principal)")
     public ResponseEntity<ApiResponse<DeviceResponseDTO>> updateDeviceById(@PathVariable Long id,
             @RequestBody @Valid UpdateDeviceDTO dto, @AuthenticationPrincipal User user) {
         return ResponseEntity

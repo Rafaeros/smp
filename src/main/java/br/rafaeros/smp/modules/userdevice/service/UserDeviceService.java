@@ -78,19 +78,21 @@ public class UserDeviceService {
                 throw new IllegalArgumentException("Status inválido: " + status);
             }
         }
+        String nameFilter = (name != null && !name.isBlank()) ? "%" + name.toLowerCase() + "%" : null;
+        String macFilter = (macAddress != null && !macAddress.isBlank()) ? "%" + macAddress.toLowerCase() + "%" : null;
 
         Page<UserDevice> devicesPage;
         if (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER) {
             devicesPage = userDeviceRepository.findAllWithFilters(
-                    name,
-                    macAddress,
+                    nameFilter,
+                    macFilter,
                     deviceStatus,
                     pageable);
         } else {
             devicesPage = userDeviceRepository.findByUserIdAndFilters(
                     user.getId(),
-                    name,
-                    macAddress,
+                    nameFilter,
+                    macFilter,
                     deviceStatus,
                     pageable);
         }
@@ -108,6 +110,16 @@ public class UserDeviceService {
         return devicesList.stream()
                 .map(UserDeviceMapResponseDTO::fromEntity)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserDeviceDetailsDTO> findAllByUserId(Long userId, User user, Pageable pageable) {
+        if (user.getRole() == Role.ADMIN || user.getRole() == Role.MANAGER) {
+            return userDeviceRepository.findAllByUserId(userId, pageable)
+                    .map(UserDeviceDetailsDTO::fromEntity);
+        } else {
+            throw new BusinessException("Acesso negado");
+        }
     }
 
     @Transactional(readOnly = true)

@@ -17,12 +17,14 @@ import br.rafaeros.smp.modules.userdevice.model.UserDevice;
 public interface UserDeviceRepository extends JpaRepository<UserDevice, Long> {
 
         @Query(value = "SELECT ud FROM UserDevice ud JOIN FETCH ud.device d WHERE ud.user.id = :userId AND " +
-                        "(:name IS NULL OR LOWER(ud.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
-                        "(:macAddress IS NULL OR LOWER(d.macAddress) LIKE LOWER(CONCAT('%', :macAddress, '%'))) AND " +
-                        "(:status IS NULL OR d.status = :status)", countQuery = "SELECT count(ud) FROM UserDevice ud JOIN ud.device d WHERE ud.user.id = :userId AND "
+                        "(:name IS NULL OR LOWER(ud.name) LIKE :name) AND " +
+                        "(:macAddress IS NULL OR LOWER(CAST(d.macAddress AS string)) LIKE :macAddress) AND " +
+                        "(:status IS NULL OR d.status = :status)",
+
+                        countQuery = "SELECT count(ud) FROM UserDevice ud JOIN ud.device d WHERE ud.user.id = :userId AND "
                                         +
-                                        "(:name IS NULL OR LOWER(ud.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
-                                        "(:macAddress IS NULL OR LOWER(d.macAddress) LIKE LOWER(CONCAT('%', :macAddress, '%'))) AND "
+                                        "(:name IS NULL OR LOWER(ud.name) LIKE :name) AND " +
+                                        "(:macAddress IS NULL OR LOWER(CAST(d.macAddress AS string)) LIKE :macAddress) AND "
                                         +
                                         "(:status IS NULL OR d.status = :status)")
         Page<UserDevice> findByUserIdAndFilters(
@@ -33,12 +35,13 @@ public interface UserDeviceRepository extends JpaRepository<UserDevice, Long> {
                         Pageable pageable);
 
         @Query(value = "SELECT ud FROM UserDevice ud JOIN FETCH ud.device d WHERE " +
-                        "(:name IS NULL OR LOWER(ud.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
-                        "(:macAddress IS NULL OR LOWER(d.macAddress) LIKE LOWER(CONCAT('%', :macAddress, '%'))) AND " +
-                        "(:status IS NULL OR d.status = :status)", countQuery = "SELECT count(ud) FROM UserDevice ud JOIN ud.device d WHERE "
-                                        +
-                                        "(:name IS NULL OR LOWER(ud.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
-                                        "(:macAddress IS NULL OR LOWER(d.macAddress) LIKE LOWER(CONCAT('%', :macAddress, '%'))) AND "
+                        "(:name IS NULL OR LOWER(ud.name) LIKE :name) AND " +
+                        "(:macAddress IS NULL OR LOWER(CAST(d.macAddress AS string)) LIKE :macAddress) AND " +
+                        "(:status IS NULL OR d.status = :status)",
+
+                        countQuery = "SELECT count(ud) FROM UserDevice ud JOIN ud.device d WHERE " +
+                                        "(:name IS NULL OR LOWER(ud.name) LIKE :name) AND " +
+                                        "(:macAddress IS NULL OR LOWER(CAST(d.macAddress AS string)) LIKE :macAddress) AND "
                                         +
                                         "(:status IS NULL OR d.status = :status)")
         Page<UserDevice> findAllWithFilters(
@@ -53,8 +56,10 @@ public interface UserDeviceRepository extends JpaRepository<UserDevice, Long> {
         @Query("SELECT ud FROM UserDevice ud JOIN FETCH ud.device")
         List<UserDevice> findAllForMap();
 
+        Page<UserDevice> findAllByUserId(Long userId, Pageable pageable);
+
         boolean existsByIdAndUserId(Long id, Long userId);
-        
+
         boolean existsByDeviceId(Long deviceId);
 
         boolean existsByUserIdAndDeviceId(Long userId, Long deviceId);
