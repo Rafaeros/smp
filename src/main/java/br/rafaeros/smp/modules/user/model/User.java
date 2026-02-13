@@ -19,6 +19,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,6 +51,14 @@ public class User extends BaseEntity implements UserDetails {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserDevice> devices;
+
+    @PrePersist
+    @PreUpdate
+    public void ensureLowercaseUsername() {
+        if (this.username != null) {
+            this.username = this.username.toLowerCase().trim();
+        }
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

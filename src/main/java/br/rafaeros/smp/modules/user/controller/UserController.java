@@ -51,21 +51,25 @@ public class UserController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER') or #id == principal.id")
-    public ResponseEntity<ApiResponse<UserResponseDTO>> getUserById(@PathVariable Long id, @AuthenticationPrincipal User User) {
+    public ResponseEntity<ApiResponse<UserResponseDTO>> getUserById(@PathVariable Long id,
+            @AuthenticationPrincipal User User) {
         return ResponseEntity.ok(ApiResponse.success("Usuário encontrado.", userService.findById(id)));
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER') or #id == principal.id")
     public ResponseEntity<ApiResponse<UserResponseDTO>> update(@PathVariable Long id,
-            @RequestBody @Valid UpdateUserRequestDTO dto) {
-        return ResponseEntity.ok(ApiResponse.success("Usuário atualizado com sucesso!", userService.update(id, dto)));
+            @RequestBody @Valid UpdateUserRequestDTO dto, @AuthenticationPrincipal User user) {
+        return ResponseEntity
+                .ok(ApiResponse.success("Dados pessoais atualizados com sucesso!", userService.update(id, dto, user)));
     }
 
     @PatchMapping("/{id}/change-password")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER') or #id == principal.id")
-    public ResponseEntity<ApiResponse<UserResponseDTO>> changePassword(@PathVariable Long id, @RequestBody @Valid UpdatePasswordRequestDTO dto, @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(ApiResponse.success("Senha atualizada com sucesso!", userService.changePassword(id, dto, user)));
+    public ResponseEntity<ApiResponse<UserResponseDTO>> changePassword(@PathVariable Long id,
+            @RequestBody @Valid UpdatePasswordRequestDTO dto, @AuthenticationPrincipal User user) {
+        return ResponseEntity
+                .ok(ApiResponse.success("Senha atualizada com sucesso!", userService.changePassword(id, dto, user)));
     }
 
     @DeleteMapping("/{id}")

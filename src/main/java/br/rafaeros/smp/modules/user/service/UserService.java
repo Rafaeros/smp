@@ -93,45 +93,45 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public UserResponseDTO update(Long id, UpdateUserRequestDTO dto) {
-        User user = findByIdInternal(id);
+public UserResponseDTO update(Long id, UpdateUserRequestDTO dto, User authenticatedUser) {
+    User user = findByIdInternal(id);
 
-        if (user == null) {
-            throw new ResourceNotFoundException("Usuário não encontrado com ID:" + id);
-        }
-
-        if (dto.firstName() != null) {
-            user.setFirstName(dto.firstName());
-        }
-
-        if (dto.lastName() != null) {
-            user.setLastName(dto.lastName());
-        }
-
-        if (dto.username() != null) {
-            if (userRepository.existsByUsername(dto.username())) {
-                throw new BusinessException("Nome de usuário já cadastrado.");
-            }
-            user.setUsername(dto.username());
-        }
-
-        if (dto.email() != null) {
-            user.setEmail(dto.email());
-        }
-
-        if (dto.role() != null) {
-            Role userRole;
-            try {
-                userRole = Role.valueOf(dto.role());
-            } catch (IllegalArgumentException e) {
-                throw new BusinessException("Cargo não encontrado");
-            }
-            user.setRole(userRole);
-        }
-
-        User savedUser = userRepository.save(user);
-        return UserResponseDTO.fromEntity(savedUser);
+    if (user == null) {
+        throw new ResourceNotFoundException("Usuário não encontrado com ID: " + id);
     }
+
+    if (dto.firstName() != null) user.setFirstName(dto.firstName());
+    if (dto.lastName() != null) user.setLastName(dto.lastName());
+    if (dto.email() != null) user.setEmail(dto.email());
+    if (dto.username() != null) {
+        String newUsername = dto.username().toLowerCase().trim();
+        boolean usernameExists = userRepository.findByUsernameIgnoreCase(newUsername)
+                .map(existingUser -> !existingUser.getId().equals(id))
+                .orElse(false);
+
+        if (usernameExists) {
+            throw new BusinessException("Nome de usuário já cadastrado.");
+        }
+        user.setUsername(newUsername);
+    }
+    if (dto.role() != null) {
+        boolean isPrivileged = authenticatedUser.getRole() == Role.ADMIN || 
+                               authenticatedUser.getRole() == Role.MANAGER;
+        
+        if (!isPrivileged) {
+            throw new BusinessException("Você não tem permissão para alterar cargos.");
+        }
+
+        try {
+            user.setRole(Role.valueOf(dto.role()));
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException("Cargo inválido.");
+        }
+    }
+
+    User savedUser = userRepository.save(user);
+    return UserResponseDTO.fromEntity(savedUser);
+}
 
     public UserResponseDTO changePassword(Long id, UpdatePasswordRequestDTO dto, User user) {
         if (!passwordEncoder.matches(dto.currentPassword(), user.getPassword())) {
