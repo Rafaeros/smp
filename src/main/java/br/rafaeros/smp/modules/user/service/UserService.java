@@ -32,7 +32,7 @@ public class UserService implements UserDetailsService {
     @Transactional
     public UserResponseDTO createUser(CreateUserRequestDTO dto) {
 
-        if (userRepository.existsByUsername(dto.username())) {
+        if (userRepository.existsByUsernameIgnoreCase(dto.username().toLowerCase().trim())) {
             throw new BusinessException("Nome de usuário ja cadastrado");
         }
 
