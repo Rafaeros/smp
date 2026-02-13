@@ -11,13 +11,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DeviceSecurity {
 
-    private UserDeviceRepository userDeviceRepository;
+    private final UserDeviceRepository userDeviceRepository;
 
     public boolean canAccessDevice(Long userDeviceId, User user) {
-        if (user == null) return false;
+        if (user == null)
+            return false;
 
-        boolean isAdminOrManager =
-                user.getRole() == Role.ADMIN ||
+        boolean isAdminOrManager = user.getRole() == Role.ADMIN ||
                 user.getRole() == Role.MANAGER;
 
         if (isAdminOrManager) {
@@ -29,10 +29,10 @@ public class DeviceSecurity {
     }
 
     public boolean canAccessUserDevices(Long userId, User user) {
-        if (user == null) return false;
+        if (user == null)
+            return false;
 
-        boolean isAdminOrManager =
-                user.getRole() == Role.ADMIN ||
+        boolean isAdminOrManager = user.getRole() == Role.ADMIN ||
                 user.getRole() == Role.MANAGER;
 
         if (isAdminOrManager) {
