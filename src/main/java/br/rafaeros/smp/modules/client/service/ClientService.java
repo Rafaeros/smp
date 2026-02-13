@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import br.rafaeros.smp.core.exception.BusinessException;
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
 import br.rafaeros.smp.modules.client.controller.dto.ClientResponseDTO;
 import br.rafaeros.smp.modules.client.controller.dto.CreateClientDTO;
@@ -73,8 +74,8 @@ public class ClientService {
         try {
             clientRepository.deleteById(safeId);
         } catch (DataIntegrityViolationException e) {
-            throw new RuntimeException(
-                    "Não é possível excluir este cliente pois ele já possui Ordens de Produção vinculadas.", e);
+            throw new BusinessException(
+                "Não é possível excluir este cliente pois ele já possui Ordens de Produção vinculadas.");
         }
     }
 
