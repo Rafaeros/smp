@@ -5,5 +5,5 @@ public interface IOrderStats {
     Double getAvgCycleTime();
     Double getMinCycleTime();
     Double getMaxCycleTime();
-    Long getQuantityProduced();
+    Long getQuantityProduced(); 
 }

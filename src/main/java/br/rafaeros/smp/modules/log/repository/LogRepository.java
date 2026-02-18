@@ -1,5 +1,8 @@
 package br.rafaeros.smp.modules.log.repository;
 
+import java.time.Instant;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +20,18 @@ public interface LogRepository extends JpaRepository<Log, Long> {
     Page<Log> findByOrderId(Long orderId, Pageable pageable);
 
     Page<Log> findByOrder_Product_Id(Long productId, Pageable pageable);
+
+    @Query("""
+        SELECT 
+            COUNT(l) AS totalLogs,
+            COALESCE(SUM(l.quantityProduced), 0) AS quantityProduced,
+            COALESCE(AVG(l.cycleTime + COALESCE(l.pausedTime, 0)), 0) AS avgCycleTime,
+            COALESCE(MIN(l.cycleTime + COALESCE(l.pausedTime, 0)), 0) AS minCycleTime,
+            COALESCE(MAX(l.cycleTime + COALESCE(l.pausedTime, 0)), 0) AS maxCycleTime
+        FROM Log l
+        WHERE l.createdAt BETWEEN :startDate AND :endDate
+    """)
+    IOrderStats getGlobalStatsByRange(@Param("startDate") Instant startDate, @Param("endDate") Instant endDate);
 
     @Query("""
                 SELECT
@@ -47,4 +62,7 @@ public interface LogRepository extends JpaRepository<Log, Long> {
         GROUP BY p.code, p.description
     """)
     ProductStatsDTO getStatsByProduct(@Param("productId") Long productId);
+
+    @Query("SELECT l FROM Log l JOIN FETCH l.order JOIN FETCH l.device ORDER BY l.createdAt DESC")
+    List<Log> findRecentLogs(Pageable pageable);
 }
