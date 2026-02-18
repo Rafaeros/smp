@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -42,23 +43,15 @@ public class OrderService {
 
     @Transactional
     public List<OrderResponseDTO> syncFromErp(ErpSearchFilter filter, boolean force) {
-
-        if (filter.getCode() != null && !filter.getCode().isBlank()) {
-            Optional<Order> exists = orderRepository.findByCode(filter.getCode());
-            if (exists.isPresent()) {
-                throw new BusinessException("Ja existe uma OP com o codigo: " + filter.getCode());
-            }
-        }
-
         List<OrderScrapeDTO> dtos = scrapeService.fetchOrders(filter);
-        if (dtos.isEmpty()) {
-            throw new ResourceNotFoundException("Nenhuma ordem encontrada no CG com esse filtro.");
-        }
 
+        if (dtos.isEmpty()) {
+            throw new ResourceNotFoundException("Nenhuma ordem encontrada no ERP com esse filtro.");
+        }
         return dtos.stream()
                 .map(dto -> processSingleOrder(dto, force))
                 .map(OrderResponseDTO::fromEntity)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Transactional
@@ -209,9 +202,9 @@ public class OrderService {
     public Order findByIdInternal(Long id) {
         Long safeId = Objects.requireNonNull(id);
         return orderRepository.findById(safeId)
-        .orElseThrow(() -> new ResourceNotFoundException("Ordem não encontrada com o ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Ordem não encontrada com o ID: " + id));
     }
-    
+
     // Private Methods
     @Transactional(readOnly = true)
     private Order findByCodeInternal(String code) {
