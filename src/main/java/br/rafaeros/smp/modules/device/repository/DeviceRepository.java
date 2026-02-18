@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import br.rafaeros.smp.modules.device.model.Device;
@@ -16,4 +17,7 @@ public interface DeviceRepository extends JpaRepository<Device, Long> {
     List<Device> findAllAvailable();
 
     boolean existsByMacAddress(String macAddress);
+
+    @Query("SELECT d FROM Device d LEFT JOIN FETCH d.currentOrder WHERE d.macAddress = :macAddress")
+    Optional<Device> findByMacAddressWithOrder(@Param("macAddress") String macAddress);
 }

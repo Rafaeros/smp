@@ -17,6 +17,7 @@ import br.rafaeros.smp.modules.device.model.Device;
 import br.rafaeros.smp.modules.device.model.enums.DeviceStatus;
 import br.rafaeros.smp.modules.device.model.enums.ProcessStatus;
 import br.rafaeros.smp.modules.device.repository.DeviceRepository;
+import br.rafaeros.smp.modules.order.model.Order;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -94,6 +95,14 @@ public class DeviceService {
         return DeviceDetailsResponseDTO.fromEntity(device);
     }
 
+    @Transactional(readOnly = true)
+    public Order getCurrentOrderEntityByMac(String macAddress) {
+        Device device = deviceRepository.findByMacAddressWithOrder(macAddress)
+                .orElseThrow(() -> new ResourceNotFoundException("Dispositivo não encontrado"));
+
+        return device.getCurrentOrder();
+    }
+
     @Transactional
     public DeviceResponseDTO updateById(Long id, UpdateDeviceDTO dto) {
         Device device = deviceRepository.findById(Objects.requireNonNull(id))
@@ -117,13 +126,22 @@ public class DeviceService {
     }
 
     @Transactional
-    public DeviceResponseDTO updateProcessStatus(String macAddress, ProcessStatus processStatus) {
-        Device device = deviceRepository.findByMacAddress(macAddress)
-                .orElseThrow(() -> new ResourceNotFoundException("Dispositivo nao encontrado"));
+    public void updateProcessStatus(String macAddress, ProcessStatus processStatus) {
+        deviceRepository.findByMacAddress(macAddress)
+                .ifPresent(device -> {
+                    device.setProcessStatus(processStatus);
+                    device.setLastSeen(Instant.now());
+                    deviceRepository.save(device);
+                });
+    }
 
-        device.setProcessStatus(processStatus);
-        device.setLastSeen(Instant.now());
-        return DeviceResponseDTO.fromEntity(deviceRepository.save(device));
+    @Transactional
+    public void updateLastSeen(String macAddress) {
+        deviceRepository.findByMacAddress(macAddress)
+                .ifPresent(device -> {
+                    device.setLastSeen(Instant.now());
+                    deviceRepository.save(device);
+                });
     }
 
     @Transactional
@@ -131,6 +149,16 @@ public class DeviceService {
         deviceRepository.findByMacAddress(macAddress)
                 .ifPresent(device -> {
                     device.setStatus(status);
+                    deviceRepository.save(device);
+                });
+    }
+
+    @Transactional
+    public void handleDisconnect(String macAddress) {
+        deviceRepository.findByMacAddress(macAddress)
+                .ifPresent(device -> {
+                    device.setStatus(DeviceStatus.OFFLINE);
+                    device.setProcessStatus(ProcessStatus.IDLE);
                     deviceRepository.save(device);
                 });
     }

@@ -1,6 +1,7 @@
 package br.rafaeros.smp.modules.userdevice.controller.dto;
 
 import br.rafaeros.smp.modules.device.model.enums.DeviceStatus;
+import br.rafaeros.smp.modules.device.model.enums.ProcessStatus;
 
 public record UserDeviceMapResponseDTO(
         Long id,
@@ -8,7 +9,9 @@ public record UserDeviceMapResponseDTO(
         String macAddress,
         Double x,
         Double y,
-        DeviceStatus status) {
+        DeviceStatus status,
+        ProcessStatus process
+    ) {
     public static UserDeviceMapResponseDTO fromEntity(br.rafaeros.smp.modules.userdevice.model.UserDevice userDevice) {
         return new UserDeviceMapResponseDTO(
                 userDevice.getId(),
@@ -16,6 +19,8 @@ public record UserDeviceMapResponseDTO(
                 userDevice.getDevice().getMacAddress(),
                 userDevice.getCoordinateX(),
                 userDevice.getCoordinateY(),
-                userDevice.getDevice().getStatus());
+                userDevice.getDevice().getStatus(),
+                userDevice.getDevice().getProcessStatus()
+            );
     }
 }
