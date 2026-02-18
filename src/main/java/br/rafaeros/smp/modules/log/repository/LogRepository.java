@@ -63,6 +63,17 @@ public interface LogRepository extends JpaRepository<Log, Long> {
     """)
     ProductStatsDTO getStatsByProduct(@Param("productId") Long productId);
 
+    @Query(value = """
+        SELECT 
+            to_char(l.created_at, 'HH24:00') as hora, 
+            SUM(l.quantity_produced) as qtd
+        FROM order_logs l
+        WHERE l.created_at >= :startOfDay
+        GROUP BY hora
+        ORDER BY hora
+    """, nativeQuery = true)
+    List<Object[]> getHourlyProduction(@Param("startOfDay") Instant startOfDay);
+
     @Query("SELECT l FROM Log l JOIN FETCH l.order JOIN FETCH l.device ORDER BY l.createdAt DESC")
     List<Log> findRecentLogs(Pageable pageable);
 }

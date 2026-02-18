@@ -3,6 +3,12 @@ package br.rafaeros.smp.modules.analytics.controller.dto;
 import java.util.List;
 
 public class DashboardDTO {
+
+    public record PerformanceDataDTO(
+        String hour,
+        Long qty
+    ) {}
+
     public record DashboardStatsDTO(
         Long totalProduced,
         Double avgCycleTime,
@@ -13,7 +19,8 @@ public class DashboardDTO {
 
     public record DashboardSummaryDTO(
         List<DashboardKPIDTO> kpis,
-        List<DashboardLogDTO> recentLogs
+        List<DashboardLogDTO> recentLogs,
+        List<PerformanceDataDTO> performanceData
     ) {}
 
     public record DashboardKPIDTO(

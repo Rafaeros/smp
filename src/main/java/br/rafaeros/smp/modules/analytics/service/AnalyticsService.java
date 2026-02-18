@@ -76,12 +76,18 @@ public class AnalyticsService {
             .map(log -> new DashboardDTO.DashboardLogDTO(
                 log.getId(),
                 log.getDevice().getMacAddress(),
-                "OP " + log.getOrder().getCode() + ": " + log.getQuantityProduced() + " un.",
+                log.getOrder().getCode() + ": " + log.getQuantityProduced() + " un.",
                 formatSmartDate(log.getCreatedAt()),
                 log.getQuantityProduced() > 0 ? "info" : "warning"
             )).toList();
 
-        return new DashboardDTO.DashboardSummaryDTO(kpis, recentLogs);
+        List<DashboardDTO.PerformanceDataDTO> performance = logRepository.getHourlyProduction(todayStart).stream()
+            .map(row -> new DashboardDTO.PerformanceDataDTO(
+                (String) row[0], 
+                ((Number) row[1]).longValue()
+            )).toList();
+
+        return new DashboardDTO.DashboardSummaryDTO(kpis, recentLogs, performance);
     }
 
     private String calculateTrend(double current, double previous, boolean higherIsBetter) {
