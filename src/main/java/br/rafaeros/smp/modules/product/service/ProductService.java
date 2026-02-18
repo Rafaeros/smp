@@ -11,7 +11,6 @@ import br.rafaeros.smp.core.exception.BusinessException;
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
 import br.rafaeros.smp.modules.product.controller.dto.CreateProductDTO;
 import br.rafaeros.smp.modules.product.controller.dto.ProductResponseDTO;
-import br.rafaeros.smp.modules.product.controller.dto.ProductSummaryDTO;
 import br.rafaeros.smp.modules.product.model.Product;
 import br.rafaeros.smp.modules.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -48,17 +47,17 @@ public class ProductService {
                 .map(ProductResponseDTO::fromEntity);
     }
 
-    public Page<ProductSummaryDTO> getSummary(String query, Pageable pageable) {
+    public Page<ProductResponseDTO> getSummary(String query, Pageable pageable) {
         Pageable safePage = Objects.requireNonNull(pageable);
 
         if (query == null || query.isBlank()) {
-            return productRepository.findAll(safePage).map(ProductSummaryDTO::fromEntity);
+            return productRepository.findAll(safePage).map(ProductResponseDTO::fromEntity);
         }
 
         String searchTerm = "%" + query + "%";
 
         return productRepository.searchByTerm(searchTerm, safePage)
-                .map(ProductSummaryDTO::fromEntity);
+                .map(ProductResponseDTO::fromEntity);
     }
 
     public ProductResponseDTO findById(Long id) {

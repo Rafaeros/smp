@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import br.rafaeros.smp.core.dto.ApiResponse;
 import br.rafaeros.smp.modules.product.controller.dto.CreateProductDTO;
 import br.rafaeros.smp.modules.product.controller.dto.ProductResponseDTO;
-import br.rafaeros.smp.modules.product.controller.dto.ProductSummaryDTO;
 import br.rafaeros.smp.modules.product.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +43,7 @@ public class ProductController {
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<ApiResponse<Page<ProductSummaryDTO>>> getSummary(
+    public ResponseEntity<ApiResponse<Page<ProductResponseDTO>>> getSummary(
             @RequestParam(required = false) String query,
             @PageableDefault(size = 10, page = 0) Pageable pageable) {
 
