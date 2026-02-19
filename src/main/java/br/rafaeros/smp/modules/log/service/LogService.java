@@ -1,6 +1,11 @@
 package br.rafaeros.smp.modules.log.service;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Objects;
 
 import org.springframework.data.domain.Page;
@@ -9,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
+import br.rafaeros.smp.core.utils.CsvUtils;
 import br.rafaeros.smp.modules.device.model.Device;
 import br.rafaeros.smp.modules.device.repository.DeviceRepository;
 import br.rafaeros.smp.modules.device.service.DeviceService;
@@ -56,7 +62,7 @@ public class LogService {
 
         Log saved = logRepository.save(log);
         return LogResponseDTO.fromEntity(saved);
-    }   
+    }
 
     @Transactional
     public void registerLogFromDevice(String macAddress, DeviceLogPayloadDTO payload) {
@@ -65,7 +71,6 @@ public class LogService {
 
         Order order = orderRepository.findById(Objects.requireNonNull(payload.orderId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Ordem não encontrada: " + payload.orderId()));
-
 
         Log log = new Log();
         log.setDevice(device);
@@ -115,5 +120,41 @@ public class LogService {
                 .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado"));
 
         return new ProductStatsDTO(product.getCode(), product.getDescription(), 0L, null, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportLogsToCsv() {
+        List<Log> logs = logRepository.findAllLogsForExport();
+
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        pw.println(
+                "Data/Hora;Ordem (OP);Produto;Máquina (MAC);Qtd Produzida;Qtd Pausada;Tempo Ciclo (s);Tempo Pausa (s);Tempo Total (s)");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+                .withZone(ZoneId.systemDefault());
+
+        for (Log log : logs) {
+            String date = log.getCreatedAt() != null ? formatter.format(log.getCreatedAt()) : "";
+            String opCode = log.getOrder() != null ? log.getOrder().getCode() : "-";
+            String productCode = (log.getOrder() != null && log.getOrder().getProduct() != null)
+                    ? log.getOrder().getProduct().getCode()
+                    : "-";
+            String macAddress = log.getDevice() != null ? log.getDevice().getMacAddress() : "-";
+            long qtyProduced = log.getQuantityProduced() != null ? log.getQuantityProduced() : 0L;
+            long qtyPaused = log.getQuantityPaused() != null ? log.getQuantityPaused() : 0L;
+
+            pw.printf("%s;%s;%s;%s;%d;%d;%s;%s;%s%n",
+                    date,
+                    CsvUtils.escapeCsv(opCode),
+                    CsvUtils.escapeCsv(productCode),
+                    CsvUtils.escapeCsv(macAddress),
+                    qtyProduced,
+                    qtyPaused,
+                    CsvUtils.formatDouble(log.getCycleTime()),
+                    CsvUtils.formatDouble(log.getPausedTime()),
+                    CsvUtils.formatDouble(log.getTotalTime()));
+        }
+
+        return CsvUtils.generateCsvBytes(sw);
     }
 }

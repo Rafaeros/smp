@@ -74,6 +74,16 @@ public interface LogRepository extends JpaRepository<Log, Long> {
     """, nativeQuery = true)
     List<Object[]> getHourlyProduction(@Param("startOfDay") Instant startOfDay);
 
+
+    @Query("""
+        SELECT l from Log l
+        JOIN FETCH l.order o
+        JOIN FETCH o.product p
+        JOIN FETCH l.device d
+        ORDER BY l.createdAt DESC
+            """)
+    List<Log> findAllLogsForExport();
+
     @Query("SELECT l FROM Log l JOIN FETCH l.order JOIN FETCH l.device ORDER BY l.createdAt DESC")
     List<Log> findRecentLogs(Pageable pageable);
 }

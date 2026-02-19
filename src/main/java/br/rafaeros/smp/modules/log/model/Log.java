@@ -3,6 +3,7 @@ package br.rafaeros.smp.modules.log.model;
 import java.time.Instant;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Formula;
 
 import br.rafaeros.smp.modules.device.model.Device;
 import br.rafaeros.smp.modules.order.model.Order;
@@ -41,6 +42,9 @@ public class Log {
 
     private Double cycleTime;
     private Double pausedTime;
+
+    @Formula("COALESCE(cycle_time, 0) + COALESCE(paused_time, 0)")
+    private Double totalTime;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")

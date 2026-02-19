@@ -1,5 +1,7 @@
 package br.rafaeros.smp.modules.order.service;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -15,11 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.rafaeros.smp.core.exception.BusinessException;
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
+import br.rafaeros.smp.core.utils.CsvUtils;
 import br.rafaeros.smp.core.utils.DateUtils;
 import br.rafaeros.smp.modules.client.model.Client;
 import br.rafaeros.smp.modules.client.service.ClientService;
 import br.rafaeros.smp.modules.order.controller.OrderSearchFilter;
 import br.rafaeros.smp.modules.order.controller.dto.CreateOrderDTO;
+import br.rafaeros.smp.modules.order.controller.dto.OrderExportDTO;
 import br.rafaeros.smp.modules.order.controller.dto.OrderResponseDTO;
 import br.rafaeros.smp.modules.order.controller.dto.OrderSummaryDTO;
 import br.rafaeros.smp.modules.order.controller.dto.UpdateOrderDTO;
@@ -259,6 +263,36 @@ public class OrderService {
             case "FINALIZADA" -> OrderStatus.FINISHED;
             default -> OrderStatus.RELEASED;
         };
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] exportOrdersToCsv() {
+        List<OrderExportDTO> stats = orderRepository.getOrderExportStats();
+
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+
+        pw.println(
+                "Ordem (OP);Produto;Cliente;Status;Qtd Planejada;Qtd Produzida;Total de Logs;Tempo Mínimo (s);Tempo Médio (s);Tempo Máximo (s)");
+
+        for (OrderExportDTO o : stats) {
+            String clientName = o.clientName() != null ? o.clientName() : "-";
+            String productCode = o.productCode() != null ? o.productCode() : "-";
+
+            pw.printf("%s;%s;%s;%s;%d;%d;%d;%s;%s;%s%n",
+                    CsvUtils.escapeCsv(o.orderCode()),
+                    CsvUtils.escapeCsv(productCode),
+                    CsvUtils.escapeCsv(clientName),
+                    o.status(),
+                    o.totalQuantity(),
+                    o.producedQuantity(),
+                    o.totalLogs(),
+                    CsvUtils.formatDouble(o.minTime()),
+                    CsvUtils.formatDouble(o.avgTime()),
+                    CsvUtils.formatDouble(o.maxTime()));
+        }
+
+        return CsvUtils.generateCsvBytes(sw);
     }
 
 }

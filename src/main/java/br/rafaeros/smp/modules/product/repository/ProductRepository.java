@@ -1,5 +1,6 @@
 package br.rafaeros.smp.modules.product.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import br.rafaeros.smp.modules.product.controller.dto.ProductExportDTO;
 import br.rafaeros.smp.modules.product.model.Product;
 
 @Repository
@@ -26,6 +28,22 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                         "LOWER(CAST(p.code AS string)) LIKE LOWER(:query) OR " +
                         "LOWER(CAST(p.description AS string)) LIKE LOWER(:query)")
         Page<Product> searchByTerm(@Param("query") String query, Pageable pageable);
+
+        @Query("""
+                SELECT new br.rafaeros.smp.modules.product.controller.dto.ProductExportDTO(
+                        p.code,
+                        p.description,
+                        COUNT(l.id),
+                        AVG(l.cycleTime + COALESCE(l.pausedTime, 0.0)),
+                        MIN(l.cycleTime + COALESCE(l.pausedTime, 0.0)),
+                        MAX(l.cycleTime + COALESCE(l.pausedTime, 0.0))
+                )
+                FROM Product p
+                LEFT JOIN Order o ON o.product = p
+                LEFT JOIN Log l ON l.order = o
+                GROUP BY p.code, p.description
+                        """)
+        List<ProductExportDTO> getProductExportStats();
 
         Optional<Product> findByCode(String code);
 

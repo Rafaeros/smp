@@ -63,18 +63,14 @@ public class TcpServerService {
         String clientIp = deviceSocket.getInetAddress().getHostAddress();
         
         try {
-            // Timeout de 5 minutos. Se não receber PING ou dados nesse tempo, desconecta.
             deviceSocket.setSoTimeout(15000);
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(deviceSocket.getInputStream()));
-            // Auto-flush = true é importante para garantir envio imediato
             PrintWriter writer = new PrintWriter(deviceSocket.getOutputStream(), true);
-
-            // --- 1. HANDSHAKE INICIAL ---
             String firstLine = reader.readLine();
             
             if (firstLine == null) {
-                return; // Conexão abriu e fechou sem dados
+                return;
             }
 
             if (firstLine.startsWith("ID:")) {
