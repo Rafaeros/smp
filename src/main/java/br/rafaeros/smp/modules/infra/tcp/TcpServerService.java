@@ -61,10 +61,10 @@ public class TcpServerService {
     private void handleClient(Socket deviceSocket) {
         String macAddress = null;
         String clientIp = deviceSocket.getInetAddress().getHostAddress();
-
+        
         try {
             // Timeout de 5 minutos. Se não receber PING ou dados nesse tempo, desconecta.
-            deviceSocket.setSoTimeout(300000);
+            deviceSocket.setSoTimeout(15000);
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(deviceSocket.getInputStream()));
             // Auto-flush = true é importante para garantir envio imediato
