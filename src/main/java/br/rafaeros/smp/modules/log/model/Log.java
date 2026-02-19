@@ -6,9 +6,12 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Formula;
 
 import br.rafaeros.smp.modules.device.model.Device;
+import br.rafaeros.smp.modules.device.model.enums.ProcessStage;
 import br.rafaeros.smp.modules.order.model.Order;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -45,6 +48,9 @@ public class Log {
 
     @Formula("COALESCE(cycle_time, 0) + COALESCE(paused_time, 0)")
     private Double totalTime;
+
+    @Enumerated(EnumType.STRING)
+    private ProcessStage stage;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")

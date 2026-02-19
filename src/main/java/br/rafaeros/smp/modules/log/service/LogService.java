@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import br.rafaeros.smp.core.exception.ResourceNotFoundException;
 import br.rafaeros.smp.core.utils.CsvUtils;
 import br.rafaeros.smp.modules.device.model.Device;
+import br.rafaeros.smp.modules.device.model.enums.ProcessStage;
 import br.rafaeros.smp.modules.device.repository.DeviceRepository;
 import br.rafaeros.smp.modules.device.service.DeviceService;
 import br.rafaeros.smp.modules.log.controller.dto.CreateLogRequestDTO;
@@ -59,7 +60,7 @@ public class LogService {
         log.setPausedTime(request.pausedTime());
         log.setOrder(orderService.findByIdInternal(request.orderId()));
         log.setDevice(deviceService.findByIdInternal(request.deviceId()));
-
+        log.setStage(ProcessStage.valueOf("PANEL_ASSEMBLY"));
         Log saved = logRepository.save(log);
         return LogResponseDTO.fromEntity(saved);
     }
@@ -80,7 +81,7 @@ public class LogService {
         log.setPausedTime(payload.pausedTime());
         log.setQuantityProduced(payload.quantityProduced());
         log.setQuantityPaused(payload.quantityPaused());
-
+        log.setStage(device.getCurrentStage());
         logRepository.save(log);
     }
 
@@ -128,8 +129,7 @@ public class LogService {
 
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
-        pw.println(
-                "Data/Hora;Ordem (OP);Produto;Máquina (MAC);Qtd Produzida;Qtd Pausada;Tempo Ciclo (s);Tempo Pausa (s);Tempo Total (s)");
+        pw.println("Data/Hora;Ordem (OP);Produto;Máquina (MAC);Etapa;Qtd Produzida;Qtd Pausada;Tempo Ciclo (s);Tempo Pausa (s);Tempo Total (s)");
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
                 .withZone(ZoneId.systemDefault());
 
@@ -142,12 +142,14 @@ public class LogService {
             String macAddress = log.getDevice() != null ? log.getDevice().getMacAddress() : "-";
             long qtyProduced = log.getQuantityProduced() != null ? log.getQuantityProduced() : 0L;
             long qtyPaused = log.getQuantityPaused() != null ? log.getQuantityPaused() : 0L;
+            String stage = log.getStage() != null ? log.getStage().getDescription() : "-";
 
-            pw.printf("%s;%s;%s;%s;%d;%d;%s;%s;%s%n",
+            pw.printf("%s;%s;%s;%s;%s;%d;%d;%s;%s;%s%n",
                     date,
                     CsvUtils.escapeCsv(opCode),
                     CsvUtils.escapeCsv(productCode),
                     CsvUtils.escapeCsv(macAddress),
+                    CsvUtils.escapeCsv(stage),
                     qtyProduced,
                     qtyPaused,
                     CsvUtils.formatDouble(log.getCycleTime()),

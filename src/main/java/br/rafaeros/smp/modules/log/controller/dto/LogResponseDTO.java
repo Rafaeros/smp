@@ -3,6 +3,7 @@ package br.rafaeros.smp.modules.log.controller.dto;
 import java.time.Instant;
 
 import br.rafaeros.smp.modules.device.controller.dto.DeviceSummaryDTO;
+import br.rafaeros.smp.modules.device.model.enums.ProcessStage;
 import br.rafaeros.smp.modules.log.model.Log;
 import br.rafaeros.smp.modules.order.controller.dto.OrderSummaryDTO;
 
@@ -14,6 +15,7 @@ public record LogResponseDTO(
     Double totalTime,
     Long quantityProduced,
     Long quantityPaused,
+    ProcessStage processStage,
     DeviceSummaryDTO device,
     OrderSummaryDTO order
 ) {
@@ -43,6 +45,7 @@ public record LogResponseDTO(
             log.getTotalTime(),
             log.getQuantityProduced(),
             log.getQuantityPaused(),
+            log.getStage(),
             deviceDto,
             orderDto
         );
